@@ -257,7 +257,8 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
               </div>
 
               <div className="order-meta-grid">
-                <span className="order-code-chip">Mã đơn hàng: {order.orderPublicId || 'Chưa có'}</span>
+                <span className="order-code-chip">ID đơn: {order.orderPublicId || 'Chưa có'}</span>
+                <span className="order-code-chip">Mã đơn hàng: {order.orderCode || 'Chưa có'}</span>
                 {!isCanceled ? <span className="amount-text">{order.orderAmount || 'Chưa có thành tiền'}</span> : null}
               </div>
 
