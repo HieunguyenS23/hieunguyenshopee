@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import type { UserRole } from '@/lib/types';
 
 type Props = {
   isAdmin: boolean;
+  role: UserRole;
 };
 
 type UnreadPayload = {
@@ -21,11 +23,12 @@ type NavItem = {
   badge?: number;
 };
 
-export function LeftTagbar({ isAdmin }: Props) {
+export function LeftTagbar({ isAdmin, role }: Props) {
   const win = typeof window !== 'undefined' ? (window as any) : null;
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState<UnreadPayload>({ unreadMessages: 0, unreadAnnouncements: 0 });
+  const unreadTotal = Number(unread.unreadMessages || 0) + Number(unread.unreadAnnouncements || 0);
 
   const closeDrawer = () => setOpen(false);
 
@@ -86,7 +89,7 @@ export function LeftTagbar({ isAdmin }: Props) {
     };
   }, []);
 
-  const links = isAdmin
+  const links: NavItem[] = isAdmin
     ? [
         { href: '/admin/lookup', label: 'Kiểm tra vận đơn', icon: '📦', section: 'Cookie & xác thực' },
         { href: '/admin/orders', label: 'Quản lí đơn', icon: '📋', section: 'Cookie & xác thực' },
@@ -96,16 +99,17 @@ export function LeftTagbar({ isAdmin }: Props) {
         { href: '/admin/add-mail', label: 'Thêm Mail', icon: '✉️', section: 'Thao tác Shop' },
         { href: '/admin/read-mail', label: 'Đọc Mail', icon: '📨', section: 'Thao tác Shop' },
 
-        { href: '/admin/users', label: 'Quản lí tài khoản', icon: '👤', section: 'Quản trị', badge: unread.unreadMessages },
+        { href: '/admin/users', label: 'Quản lí tài khoản', icon: '👤', section: 'Quản trị', badge: unreadTotal },
         { href: '/orders/history', label: 'Lịch sử đơn', icon: '🕘', section: 'Quản trị' },
         { href: '/profile', label: 'Hồ sơ', icon: '🪪', section: 'Quản trị' },
-        { href: '/announcements', label: 'Thông báo', icon: '🔔', section: 'Quản trị', badge: unread.unreadAnnouncements },
+        { href: '/announcements', label: 'Thông báo', icon: '🔔', section: 'Quản trị' },
       ]
     : [
         { href: '/orders/new', label: 'Lên đơn', icon: '📝', section: 'Khách hàng' },
         { href: '/orders/history', label: 'Lịch sử', icon: '🕘', section: 'Khách hàng' },
+        ...(role === 'ctv' ? [{ href: '/admin/lookup', label: 'Kiểm tra vận đơn', icon: '📦', section: 'Khách hàng' }] : []),
         { href: '/profile', label: 'Hồ sơ', icon: '🪪', section: 'Khách hàng' },
-        { href: '/announcements', label: 'Thông báo', icon: '🔔', section: 'Khách hàng', badge: unread.unreadAnnouncements + unread.unreadMessages },
+        { href: '/announcements', label: 'Thông báo', icon: '🔔', section: 'Khách hàng', badge: unreadTotal },
       ];
 
   const grouped = useMemo(() => {

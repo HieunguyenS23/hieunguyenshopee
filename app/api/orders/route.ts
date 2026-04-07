@@ -174,9 +174,40 @@ function pickProductNameFromCheckResponse(data: any) {
 }
 
 
-async function fetchCurrentStatusByTracking(tracking: string) {
+function isGTracking(tracking: string) {
+  return /^g/i.test(String(tracking || '').trim());
+}
+
+function pickStatusByTrackingFromCheckResponse(data: any, tracking: string) {
+  const rows = Array.isArray(data?.orders) ? data.orders : [];
+  const trackingLower = String(tracking || '').trim().toLowerCase();
+  const target = rows.find((item: any) => String(item?.tracking || item?.trackingCode || '').trim().toLowerCase() === trackingLower) || rows[0];
+  if (!target) return '';
+  return String(target?.statusText || target?.status || '').trim();
+}
+
+async function fetchCurrentStatusByTracking(tracking: string, cookieForG = '') {
   const trackingValue = String(tracking || '').trim();
   if (!trackingValue) return '';
+
+  if (isGTracking(trackingValue)) {
+    const cookie = normalizeCookie(cookieForG);
+    if (!cookie) return '';
+
+    try {
+      const checkRes = await fetch(`${TRACK_API_BASE}/api/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cookie }),
+        cache: 'no-store',
+      });
+      const checkData = await checkRes.json().catch(() => ({}));
+      if (!checkRes.ok) return '';
+      return pickStatusByTrackingFromCheckResponse(checkData, trackingValue) || pickDeliveryStatusFromCheckResponse(checkData);
+    } catch {
+      return '';
+    }
+  }
 
   try {
     const response = await fetch(`${TRACK_API_BASE}/api/spx`, {
@@ -204,7 +235,12 @@ async function fetchCurrentStatusByTracking(tracking: string) {
   }
 }
 
-async function fetchDeliveryStatusByCookie(cookieInput: string) {
+function pickDeliveryStatusByCookie(data: any, tracking: string) {
+  if (!tracking) return '';
+  return pickStatusByTrackingFromCheckResponse(data, tracking);
+}
+
+async function fetchDeliveryStatusByCookie(cookieInput: string, trackingHint = '') {
   const cookie = normalizeCookie(cookieInput);
   if (!cookie) throw new Error('Thiếu cookie để kiểm tra trạng thái giao hàng.');
 
@@ -220,11 +256,12 @@ async function fetchDeliveryStatusByCookie(cookieInput: string) {
     throw new Error(String(data?.error || 'Không lấy được trạng thái giao hàng từ API.'));
   }
 
-  const tracking = pickTrackingCodeFromCheckResponse(data);
-  const detailedStatus = await fetchCurrentStatusByTracking(tracking);
+  const hintedTracking = String(trackingHint || '').trim();
+  const tracking = hintedTracking || pickTrackingCodeFromCheckResponse(data);
+  const detailedStatus = await fetchCurrentStatusByTracking(tracking, cookie);
 
   return {
-    status: detailedStatus || pickDeliveryStatusFromCheckResponse(data),
+    status: detailedStatus || pickDeliveryStatusByCookie(data, tracking) || pickDeliveryStatusFromCheckResponse(data),
     tracking,
     orderCode: pickOrderCodeFromCheckResponse(data),
     orderAmount: pickOrderAmountFromCheckResponse(data),
@@ -238,7 +275,7 @@ async function syncDeliveryStatusOnRead(order: any) {
   const tracking = String(order?.deliveryTracking || '').trim();
   if (!tracking) return order;
 
-  const latestStatus = await fetchCurrentStatusByTracking(tracking);
+  const latestStatus = await fetchCurrentStatusByTracking(tracking, String(order?.processingCookie || ''));
   if (!latestStatus || latestStatus === String(order?.deliveryStatus || '').trim()) return order;
 
   try {
@@ -383,6 +420,7 @@ export async function PATCH(request: Request) {
   const quantity = body.quantity === undefined ? undefined : Number(body.quantity || 0);
 
   const processingCookie = body.processingCookie === undefined ? undefined : String(body.processingCookie || '').trim();
+  const deliveryTrackingHint = body.deliveryTracking === undefined ? undefined : String(body.deliveryTracking || '').trim();
   const processingAccount = body.processingAccount === undefined ? undefined : String(body.processingAccount || '').trim();
   const orderImage = body.orderImage === undefined ? undefined : String(body.orderImage || '').trim();
   const adminNote = body.adminNote === undefined ? undefined : String(body.adminNote || '').trim();
@@ -504,7 +542,8 @@ export async function PATCH(request: Request) {
 
     if (refreshDelivery) {
       const cookieForCheck = payload.processingCookie ?? processingCookie ?? '';
-      const delivery = await fetchDeliveryStatusByCookie(cookieForCheck);
+      const trackingForCheck = deliveryTrackingHint || '';
+      const delivery = await fetchDeliveryStatusByCookie(cookieForCheck, trackingForCheck);
       payload.deliveryStatus = delivery.status;
       payload.deliveryTracking = delivery.tracking;
       payload.orderCode = delivery.orderCode;
@@ -566,6 +605,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Không xóa được đơn.' }, { status: 500 });
   }
 }
+
 
 
 

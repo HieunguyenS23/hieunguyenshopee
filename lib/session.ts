@@ -114,3 +114,10 @@ export async function clearSessionCookie() {
     maxAge: 0,
   });
 }
+
+
+export async function requireAdminOrCtv() {
+  const session = await requireSession();
+  if (session.role !== 'admin' && session.role !== 'ctv') redirect('/orders/new');
+  return session;
+}

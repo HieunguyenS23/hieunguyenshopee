@@ -19,16 +19,6 @@ type InternalLink = {
   createdAt: string;
 };
 
-type ApiConfig = {
-  token: string;
-  listEndpoint: string;
-  saveEndpoint: string;
-  listMethod: 'GET' | 'POST';
-  saveMethod: 'POST' | 'PUT';
-};
-
-const CONFIG_KEY = 'portal_save_voucher_api_config_v1';
-
 function cleanText(value: unknown) {
   return String(value || '').trim();
 }
@@ -93,40 +83,12 @@ export function SaveVoucherCenter() {
   const [linkUrl, setLinkUrl] = useState('');
   const [internalLinks, setInternalLinks] = useState<InternalLink[]>([]);
 
-  const [config, setConfig] = useState<ApiConfig>({
-    token: '',
-    listEndpoint: '/api/shopee/voucher/list',
-    saveEndpoint: '/api/shopee/voucher/save',
-    listMethod: 'POST',
-    saveMethod: 'POST',
-  });
-  const [configJsonInput, setConfigJsonInput] = useState('');
-
   const cookieLines = useMemo(() => cookieText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean), [cookieText]);
   const catalogByTab = useMemo(() => catalog.filter((item) => item.kind === activeTab), [catalog, activeTab]);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CONFIG_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<ApiConfig>;
-      setConfig((prev) => ({
-        ...prev,
-        token: cleanText(parsed.token),
-        listEndpoint: cleanText(parsed.listEndpoint) || prev.listEndpoint,
-        saveEndpoint: cleanText(parsed.saveEndpoint) || prev.saveEndpoint,
-        listMethod: parsed.listMethod === 'GET' ? 'GET' : 'POST',
-        saveMethod: parsed.saveMethod === 'PUT' ? 'PUT' : 'POST',
-      }));
-    } catch {
-      // ignore
-    }
     loadInternalLinks();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-  }, [config]);
 
   async function loadInternalLinks() {
     try {
@@ -143,37 +105,6 @@ export function SaveVoucherCenter() {
     setSelectedCodes((prev) => ({ ...prev, [code]: !prev[code] }));
   }
 
-  function applyConfigFromJsonInput() {
-    const input = cleanText(configJsonInput);
-    if (!input) {
-      showToast('Ban chua dan JSON config.', 'error');
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(input) as Record<string, unknown>;
-      const nextToken = cleanText(parsed.token || parsed.bearer || parsed.bearerToken || parsed.authorization);
-      const nextListEndpoint = cleanText(parsed.listEndpoint || parsed.voucherListEndpoint || parsed.list_url) || '/api/shopee/voucher/list';
-      const nextSaveEndpoint = cleanText(parsed.saveEndpoint || parsed.voucherSaveEndpoint || parsed.save_url) || '/api/shopee/voucher/save';
-
-      const listMethodRaw = cleanText(parsed.listMethod || parsed.voucherListMethod || parsed.list_method).toUpperCase();
-      const saveMethodRaw = cleanText(parsed.saveMethod || parsed.voucherSaveMethod || parsed.save_method).toUpperCase();
-
-      const listMethod: 'GET' | 'POST' = listMethodRaw === 'GET' ? 'GET' : 'POST';
-      const saveMethod: 'POST' | 'PUT' = saveMethodRaw === 'PUT' ? 'PUT' : 'POST';
-
-      if (!nextToken) {
-        showToast('JSON thieu token/bearer.', 'error');
-        return;
-      }
-
-      setConfig({ token: nextToken, listEndpoint: nextListEndpoint, saveEndpoint: nextSaveEndpoint, listMethod, saveMethod });
-      showToast('Da tu dong dan config tu JSON.', 'success');
-    } catch {
-      showToast('JSON config khong hop le.', 'error');
-    }
-  }
-
   async function fetchCatalog() {
     setLoading(true);
     try {
@@ -182,9 +113,6 @@ export function SaveVoucherCenter() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'list',
-          endpoint: config.listEndpoint,
-          method: config.listMethod,
-          token: config.token,
           cookie: cookieLines[0] || '',
         }),
       });
@@ -195,9 +123,9 @@ export function SaveVoucherCenter() {
       setCatalog(vouchers);
 
       if (vouchers.length === 0) {
-        showToast('Khong doc duoc du lieu voucher. Hay chinh endpoint/method theo API Autopee hien tai.', 'error');
+        showToast('Chua doc duoc du lieu voucher tu API.', 'error');
       } else {
-        showToast(`Da tai ${vouchers.length} voucher tu Autopee.`, 'success');
+        showToast(`Da tai ${vouchers.length} voucher.`, 'success');
       }
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Loi tai danh sach voucher.', 'error');
@@ -229,9 +157,6 @@ export function SaveVoucherCenter() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: 'save',
-              endpoint: config.saveEndpoint,
-              method: config.saveMethod,
-              token: config.token,
               cookie,
               voucher,
             }),
@@ -307,33 +232,12 @@ export function SaveVoucherCenter() {
 
       <article className="hub-card">
         <div className="hub-card-head">
-          <h3>Cau hinh API Autopee</h3>
-          <span className="muted">Trang doc lap, goi Autopee qua server proxy.</span>
+          <h3>Tu dong cau hinh API</h3>
+          <span className="muted">Da dung API co dinh tren server, khong can nhap token/endpoint/method.</span>
         </div>
-        <div className="form-grid compact">
-          <label className="full-span"><span>JSON config (dan 1 lan)</span><textarea className="voucher-config-json-input" value={configJsonInput} onChange={(e) => setConfigJsonInput(e.target.value)} placeholder='{"token":"...","listEndpoint":"/api/shopee/voucher/list","saveEndpoint":"/api/shopee/voucher/save","listMethod":"POST","saveMethod":"POST"}' /></label>
-          <div className="voucher-config-actions full-span">
-            <button type="button" className="mini-action" onClick={applyConfigFromJsonInput} disabled={loading}>Tu dong dan config</button>
-            <button type="button" className="ghost-button" onClick={() => setConfigJsonInput('')} disabled={loading}>Xoa JSON</button>
-          </div>
-          <label><span>Bearer token</span><input value={config.token} onChange={(e) => setConfig((prev) => ({ ...prev, token: e.target.value }))} placeholder="eyJhbGci..." /></label>
-          <label><span>Endpoint lay voucher</span><input value={config.listEndpoint} onChange={(e) => setConfig((prev) => ({ ...prev, listEndpoint: e.target.value }))} placeholder="/api/shopee/voucher/list" /></label>
-          <label>
-            <span>Method lay voucher</span>
-            <select value={config.listMethod} onChange={(e) => setConfig((prev) => ({ ...prev, listMethod: (e.target.value === 'GET' ? 'GET' : 'POST') }))}>
-              <option value="POST">POST</option>
-              <option value="GET">GET</option>
-            </select>
-          </label>
-          <label><span>Endpoint luu voucher</span><input value={config.saveEndpoint} onChange={(e) => setConfig((prev) => ({ ...prev, saveEndpoint: e.target.value }))} placeholder="/api/shopee/voucher/save" /></label>
-          <label>
-            <span>Method luu voucher</span>
-            <select value={config.saveMethod} onChange={(e) => setConfig((prev) => ({ ...prev, saveMethod: (e.target.value === 'PUT' ? 'PUT' : 'POST') }))}>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-            </select>
-          </label>
+        <div className="voucher-top-actions">
           <button type="button" className="mini-action" onClick={fetchCatalog} disabled={loading}>Tai danh sach voucher</button>
+          <button type="button" className="ghost-button" onClick={() => setSelectedCodes({})} disabled={loading}>Bo chon</button>
         </div>
       </article>
 

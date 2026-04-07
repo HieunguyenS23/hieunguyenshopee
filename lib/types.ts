@@ -1,4 +1,4 @@
-﻿export type UserRole = 'admin' | 'customer';
+﻿export type UserRole = 'admin' | 'customer' | 'ctv';
 
 export type UserRecord = {
   username: string;

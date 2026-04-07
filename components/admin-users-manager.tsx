@@ -6,7 +6,7 @@ import { showToast } from '@/lib/client-toast';
 
 type UserRow = {
   username: string;
-  role: 'admin' | 'customer';
+  role: 'admin' | 'customer' | 'ctv';
   createdAt: string;
   passwordPlain?: string;
   unreadCount?: number;
@@ -60,7 +60,7 @@ export function AdminUsersManager({ initialUsers }: Props) {
 
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [newRole, setNewRole] = useState<'admin' | 'customer'>('customer');
+  const [newRole, setNewRole] = useState<'admin' | 'customer' | 'ctv'>('customer');
   const selectedUsernameRef = useRef(selectedUsername);
 
   const total = useMemo(() => users.length, [users.length]);
@@ -331,8 +331,9 @@ export function AdminUsersManager({ initialUsers }: Props) {
               <label><span>Mật khẩu</span><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="tối thiểu 6 ký tự" /></label>
               <label>
                 <span>Vai trò</span>
-                <select value={newRole} onChange={(e) => setNewRole(e.target.value === 'admin' ? 'admin' : 'customer')}>
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value === 'admin' ? 'admin' : (e.target.value === 'ctv' ? 'ctv' : 'customer'))}>
                   <option value="customer">customer</option>
+                  <option value="ctv">ctv</option>
                   <option value="admin">admin</option>
                 </select>
               </label>
@@ -399,7 +400,7 @@ export function AdminUsersManager({ initialUsers }: Props) {
                   </label>
                   <label>
                     <span>Vai trò</span>
-                    <select value={detail.user.role} onChange={(e) => setDetail({ ...detail, user: { ...detail.user, role: e.target.value === 'admin' ? 'admin' : 'customer' } })}>
+                    <select value={detail.user.role} onChange={(e) => setDetail({ ...detail, user: { ...detail.user, role: e.target.value === 'admin' ? 'admin' : (e.target.value === 'ctv' ? 'ctv' : 'customer') } })}>
                       <option value="customer">customer</option>
                       <option value="admin">admin</option>
                     </select>

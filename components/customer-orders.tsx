@@ -172,6 +172,15 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Không tra được hành trình vận đơn.');
 
+      if (String(data?.provider || '').toLowerCase() === 'ghn' && /^g/i.test(tracking)) {
+        const targetUrl = String(data?.externalUrl || '').trim();
+        if (targetUrl) {
+          window.open(targetUrl, '_blank', 'noopener,noreferrer');
+          setMessage('Đã mở trang theo dõi GHN trên tab mới.');
+          return;
+        }
+      }
+
       const result = data.result || {};
       const currentStatus = String(data?.currentStatus || result?.status || result?.latest?.desc || '').trim();
 
@@ -349,3 +358,4 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
     </section>
   );
 }
+

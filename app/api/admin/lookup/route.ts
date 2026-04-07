@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/session';
+import { requireAdminOrCtv } from '@/lib/session';
 
 const BASE_URL = process.env.DODANHVU_BASE_URL || 'https://dodanhvu.dpdns.org';
 
@@ -44,7 +44,7 @@ async function callUpstream(pathname: string, init: RequestInit) {
 }
 
 export async function POST(request: Request) {
-  await requireAdmin();
+  await requireAdminOrCtv();
 
   try {
     const body = await request.json();

@@ -19,6 +19,7 @@ type LookupOrder = {
   orderTime?: string;
   canCancel?: boolean;
   isCheckout?: boolean;
+  _cookie?: string;
 };
 
 type SpxResult = {
@@ -42,19 +43,22 @@ function normalizeQrImageSource(raw: string) {
   if (/^data:image\//i.test(value)) return value;
   if (/^https?:\/\//i.test(value)) return value;
 
-  const base64 = value
-    .replace(/^data:[^;]+;base64,/i, '')
-    .replace(/\s+/g, '');
-
+  const base64 = value.replace(/^data:[^;]+;base64,/i, '').replace(/\s+/g, '');
   if (!base64) return '';
   return `data:image/png;base64,${base64}`;
 }
-
 
 function extractOrderProductName(order: LookupOrder) {
   const names = (order.products || []).map((item) => String(item?.name || '').trim()).filter(Boolean);
   if (names.length > 0) return names.join(' | ');
   return 'Chưa có';
+}
+
+function parseBatchLines(input: string) {
+  return String(input || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 export function LookupCenter() {
@@ -109,23 +113,64 @@ export function LookupCenter() {
     return data;
   }
 
-  async function runCheckByCookie(cookieRaw: string) {
+  async function checkSingleCookie(cookieRaw: string) {
     const cookie = normalizeCookie(cookieRaw);
-    if (!cookie) {
+    if (!cookie) return null;
+
+    const data = await callLookup({ action: 'check', cookie });
+    const payload = data.data || {};
+    const ordersRaw = Array.isArray(payload.orders) ? payload.orders : [];
+    const cookieNormalized = String(payload.cookie || cookie);
+    const usernameDetected = String(payload.username || '');
+
+    const mappedOrders = ordersRaw.map((order: LookupOrder) => ({ ...order, _cookie: cookieNormalized }));
+
+    return {
+      cookie: cookieNormalized,
+      username: usernameDetected,
+      orders: mappedOrders,
+    };
+  }
+
+  async function runCheckByCookieBatch() {
+    const lines = parseBatchLines(cookieInput);
+    if (lines.length === 0) {
       showToast('Bạn chưa nhập cookie SPC_ST.', 'error');
       return;
     }
 
     setLoading(true);
     try {
-      const data = await callLookup({ action: 'check', cookie });
-      const payload = data.data || {};
-      const nextOrders = Array.isArray(payload.orders) ? payload.orders : [];
-      setOrders(nextOrders);
-      setCookieInput(String(payload.cookie || cookie));
-      setCookieOutput(String(payload.cookie || cookie));
-      setUsername(String(payload.username || ''));
-      showToast(`Tra cứu thành công: ${nextOrders.length} đơn.`, 'success');
+      const allOrders: LookupOrder[] = [];
+      const cookiesOk: string[] = [];
+      const usernamesOk: string[] = [];
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const line of lines) {
+        try {
+          const item = await checkSingleCookie(line);
+          if (!item) continue;
+          successCount += 1;
+          allOrders.push(...item.orders);
+          cookiesOk.push(item.cookie);
+          if (item.username) usernamesOk.push(item.username);
+        } catch {
+          failCount += 1;
+        }
+      }
+
+      setOrders(allOrders);
+      setCookieOutput(cookiesOk.join('\n'));
+      setCookieInput(cookiesOk.join('\n') || cookieInput);
+      setUsername(Array.from(new Set(usernamesOk)).join(' | '));
+
+      if (successCount === 0) {
+        showToast('Không cookie nào tra cứu thành công.', 'error');
+        return;
+      }
+
+      showToast(`Đã xử lí ${successCount}/${lines.length} cookie.`, failCount > 0 ? 'info' : 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Không kiểm tra được cookie.', 'error');
     } finally {
@@ -133,31 +178,63 @@ export function LookupCenter() {
     }
   }
 
-  async function runLoginAndCheck() {
-    const input = String(accountInput || '').trim();
-    if (!input) {
+  async function runLoginAndCheckBatch() {
+    const lines = parseBatchLines(accountInput);
+    if (lines.length === 0) {
       showToast('Bạn chưa nhập user|pass|SPC_F.', 'error');
       return;
     }
 
     setLoading(true);
     try {
-      const login = await callLookup({ action: 'login', input });
-      const payload = login.data || {};
-      const cookie = String(payload.cookie || '');
+      const allOrders: LookupOrder[] = [];
+      const cookiesOk: string[] = [];
+      const usernamesOk: string[] = [];
+      let successCount = 0;
+      let failCount = 0;
 
-      setCookieOutput(cookie);
-      setCookieInput(cookie);
-      setUsername(String(payload.username || ''));
+      for (const input of lines) {
+        try {
+          const login = await callLookup({ action: 'login', input });
+          const payload = login.data || {};
+          const cookie = normalizeCookie(String(payload.cookie || ''));
+          if (!cookie) {
+            failCount += 1;
+            continue;
+          }
 
-      const nextOrders = Array.isArray(payload.orders) ? payload.orders : [];
-      if (nextOrders.length > 0) {
-        setOrders(nextOrders);
-      } else {
-        await runCheckByCookie(cookie);
+          const ordersRaw = Array.isArray(payload.orders) ? payload.orders : [];
+          const usernameDetected = String(payload.username || '');
+          const mapped = ordersRaw.map((order: LookupOrder) => ({ ...order, _cookie: cookie }));
+
+          if (mapped.length > 0) {
+            allOrders.push(...mapped);
+          } else {
+            const checked = await checkSingleCookie(cookie);
+            if (checked) {
+              allOrders.push(...checked.orders);
+            }
+          }
+
+          cookiesOk.push(cookie);
+          if (usernameDetected) usernamesOk.push(usernameDetected);
+          successCount += 1;
+        } catch {
+          failCount += 1;
+        }
       }
 
-      showToast('Đăng nhập và lấy SPC_ST thành công.', 'success');
+      setOrders(allOrders);
+      setCookieOutput(cookiesOk.join('\n'));
+      setCookieInput(cookiesOk.join('\n'));
+      setUsername(Array.from(new Set(usernamesOk)).join(' | '));
+
+      if (successCount === 0) {
+        showToast('Không account nào lấy được SPC_ST.', 'error');
+        return;
+      }
+
+      showToast(`Đã xử lí ${successCount}/${lines.length} account.`, failCount > 0 ? 'info' : 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Không lấy được SPC_ST.', 'error');
     } finally {
@@ -177,15 +254,7 @@ export function LookupCenter() {
       const payload = result.data || {};
       const source = payload?.data && typeof payload.data === 'object' ? payload.data : payload;
       const sessionId = String(source.sessionId || source.session_id || payload.sessionId || payload.session_id || '');
-      const qrRaw = String(
-        source.qrBase64 ||
-        source.qr_base64 ||
-        source.qr ||
-        source.qrcode ||
-        source.qrUrl ||
-        source.qr_url ||
-        ''
-      );
+      const qrRaw = String(source.qrBase64 || source.qr_base64 || source.qr || source.qrcode || source.qrUrl || source.qr_url || '');
       const qrImageSrc = normalizeQrImageSource(qrRaw);
 
       if (!sessionId || !qrImageSrc) throw new Error('API không trả sessionId hoặc ảnh QR hợp lệ.');
@@ -201,12 +270,10 @@ export function LookupCenter() {
           const status = String(statusPayload.status || '').trim().toLowerCase();
 
           if (!status) return;
-
           if (status === 'waiting') {
             setQrStatusText('Đang chờ quét QR...');
             return;
           }
-
           if (status === 'scanned') {
             setQrStatusText('Đã quét QR, chờ xác nhận trên app Shopee...');
             return;
@@ -222,7 +289,14 @@ export function LookupCenter() {
             setCookieOutput(cookie);
             setCookieInput(cookie);
             showToast('QR login thành công, đã lấy cookie.', 'success');
-            await runCheckByCookie(cookie);
+
+            const checked = await checkSingleCookie(cookie);
+            if (checked) {
+              setOrders(checked.orders);
+              setUsername(checked.username || '');
+              setCookieOutput(checked.cookie);
+              setCookieInput(checked.cookie);
+            }
             return;
           }
 
@@ -235,7 +309,7 @@ export function LookupCenter() {
             showToast('QR login thất bại hoặc hết hạn.', 'error');
           }
         } catch {
-          // ignore transient polling errors
+          // ignore transient errors
         }
       }, 2500);
     } catch (error) {
@@ -267,7 +341,7 @@ export function LookupCenter() {
   }
 
   async function cancelOrder(order: LookupOrder) {
-    const cookie = normalizeCookie(cookieInput || cookieOutput);
+    const cookie = normalizeCookie(order._cookie || cookieInput || cookieOutput.split(/\r?\n/)[0] || '');
     if (!cookie || !order.orderId) {
       showToast('Thiếu cookie hoặc mã đơn để hủy.', 'error');
       return;
@@ -282,7 +356,7 @@ export function LookupCenter() {
         isCheckout: Boolean(order.isCheckout),
       });
       showToast(String(result?.data?.message || `Đã hủy đơn #${order.orderId}.`), 'success');
-      await runCheckByCookie(cookie);
+      await runCheckByCookieBatch();
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Không thể hủy đơn này.', 'error');
     } finally {
@@ -291,13 +365,9 @@ export function LookupCenter() {
   }
 
   async function runSpxLookup() {
-    const trackings = spxInput
-      .split(/\r?\n/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-
+    const trackings = parseBatchLines(spxInput);
     if (trackings.length === 0) {
-      showToast('Bạn chưa nhập mã vận đơn SPX.', 'error');
+      showToast('Bạn chưa nhập mã vận đơn.', 'error');
       return;
     }
 
@@ -309,15 +379,18 @@ export function LookupCenter() {
       setSpxDetail(rows[0] || null);
       showToast(`Đã tra ${rows.length} vận đơn.`, 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Không tra được SPX.', 'error');
+      showToast(error instanceof Error ? error.message : 'Không tra được vận đơn.', 'error');
     } finally {
       setLoading(false);
     }
   }
 
   async function copyCookie() {
-    const text = normalizeCookie(cookieOutput || cookieInput);
-    if (!text) return;
+    const text = String(cookieOutput || '').trim();
+    if (!text) {
+      showToast('Chưa có cookie để copy.', 'error');
+      return;
+    }
     await navigator.clipboard.writeText(text);
     showToast('Đã copy SPC_ST.', 'success');
   }
@@ -335,7 +408,6 @@ export function LookupCenter() {
       <article className="hub-card">
         <div className="hub-card-head">
           <h3>Đăng nhập và tra đơn Shopee</h3>
-          <span className="muted">API: dodanhvu.dpdns.org</span>
         </div>
 
         <div className="lookup-tabs">
@@ -347,17 +419,27 @@ export function LookupCenter() {
 
         {tab === 'cookie' ? (
           <div className="form-grid compact lookup-form-grid">
-            <label className="full-span"><span>Cookie SPC_ST</span><input value={cookieInput} onChange={(e) => setCookieInput(e.target.value)} placeholder="SPC_ST=..." /></label>
-            <button className="primary-button" type="button" disabled={loading} onClick={() => runCheckByCookie(cookieInput)}>Kiểm tra đơn</button>
-            <button className="ghost-button" type="button" disabled={loading} onClick={copyCookie}>Copy SPC_ST</button>
+            <label className="full-span">
+              <span>Cookie SPC_ST (mỗi dòng 1 cookie)</span>
+              <textarea value={cookieInput} onChange={(e) => setCookieInput(e.target.value)} placeholder={'SPC_ST=...\nSPC_ST=...'} />
+            </label>
+            <div className="lookup-action-row full-span">
+              <button className="primary-button lookup-main-btn" type="button" disabled={loading} onClick={runCheckByCookieBatch}>Kiểm tra đơn</button>
+              <button className="ghost-button lookup-copy-btn" type="button" disabled={loading} onClick={copyCookie}>Copy</button>
+            </div>
           </div>
         ) : null}
 
         {tab === 'account' ? (
           <div className="form-grid compact lookup-form-grid">
-            <label className="full-span"><span>User|Pass|SPC_F</span><input value={accountInput} onChange={(e) => setAccountInput(e.target.value)} placeholder="username|password|SPC_F" /></label>
-            <button className="primary-button" type="button" disabled={loading} onClick={runLoginAndCheck}>Lấy SPC_ST + Tra đơn</button>
-            <button className="ghost-button" type="button" disabled={loading} onClick={copyCookie}>Copy SPC_ST</button>
+            <label className="full-span">
+              <span>User|Pass|SPC_F (mỗi dòng 1 account)</span>
+              <textarea value={accountInput} onChange={(e) => setAccountInput(e.target.value)} placeholder={'user|pass|SPC_F\nuser|pass|SPC_F'} />
+            </label>
+            <div className="lookup-action-row full-span">
+              <button className="primary-button lookup-main-btn" type="button" disabled={loading} onClick={runLoginAndCheckBatch}>Lấy SPC_ST + Tra đơn</button>
+              <button className="ghost-button lookup-copy-btn" type="button" disabled={loading} onClick={copyCookie}>Copy</button>
+            </div>
           </div>
         ) : null}
 
@@ -375,16 +457,16 @@ export function LookupCenter() {
         {tab === 'spx' ? (
           <div className="form-grid compact lookup-form-grid">
             <label className="full-span">
-              <span>Mã vận đơn SPX (mỗi dòng 1 mã)</span>
-              <textarea value={spxInput} onChange={(e) => setSpxInput(e.target.value)} placeholder={'SPXVN...\nSPXVN...'} />
+              <span>Mã vận đơn (mỗi dòng 1 mã)</span>
+              <textarea value={spxInput} onChange={(e) => setSpxInput(e.target.value)} placeholder={'SPXVN...\nG...'} />
             </label>
-            <button className="primary-button" type="button" disabled={loading} onClick={runSpxLookup}>Tra cứu SPX</button>
+            <button className="primary-button" type="button" disabled={loading} onClick={runSpxLookup}>Tra cứu vận đơn</button>
           </div>
         ) : null}
 
         <div className="lookup-output">
           <div><span>Username:</span><strong>{username || 'Chưa có'}</strong></div>
-          <div><span>SPC_ST:</span><strong>{cookieOutput ? 'Đã có cookie' : 'Chưa có'}</strong></div>
+          <div><span>SPC_ST:</span><strong>{cookieOutput ? `${parseBatchLines(cookieOutput).length} cookie` : 'Chưa có'}</strong></div>
         </div>
       </article>
 
@@ -472,5 +554,4 @@ export function LookupCenter() {
     </section>
   );
 }
-
 

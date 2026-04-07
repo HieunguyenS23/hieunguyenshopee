@@ -364,7 +364,7 @@ function mapUser(row: Record<string, unknown>): UserRecord {
     username: String(row.username),
     passwordHash: String(row.password_hash),
     passwordPlain: String(row.password_plain || ''),
-    role: row.role === 'admin' ? 'admin' : 'customer',
+    role: row.role === 'admin' ? 'admin' : (row.role === 'ctv' ? 'ctv' : 'customer'),
     createdAt: new Date(String(row.created_at)).toISOString(),
   };
 }
@@ -726,7 +726,7 @@ export async function getUsers() {
   return [...store.users].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function updateUserRecord(username: string, payload: { passwordHash?: string; passwordPlain?: string; role?: 'admin' | 'customer' }) {
+export async function updateUserRecord(username: string, payload: { passwordHash?: string; passwordPlain?: string; role?: 'admin' | 'customer' | 'ctv' }) {
   if (!username) throw new Error('Thiếu username.');
 
   if (sql) {
@@ -1024,7 +1024,7 @@ export async function renameUsername(oldUsername: string, newUsername: string) {
   return { ok: true };
 }
 
-export async function getMessages(options: { username: string; role: 'admin' | 'customer'; target?: string }) {
+export async function getMessages(options: { username: string; role: 'admin' | 'customer' | 'ctv'; target?: string }) {
   const { username, role, target } = options;
 
   if (sql) {

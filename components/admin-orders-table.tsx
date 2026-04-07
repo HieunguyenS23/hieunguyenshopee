@@ -184,6 +184,7 @@ export function AdminOrdersTable({ initialOrders }: Props) {
     if (order.status === 'canceled') return;
     await patchOrder(order.id, {
       processingCookie: order.processingCookie,
+      deliveryTracking: order.deliveryTracking || '',
       refreshDeliveryStatus: true,
     }, 'Đã cập nhật trạng thái giao hàng.');
   }
@@ -236,7 +237,7 @@ export function AdminOrdersTable({ initialOrders }: Props) {
 
     const payload = type === 'cookie'
       ? { processingAccount: detailDraft.processingAccount, refreshCookieFromAccount: true }
-      : { processingCookie: detailDraft.processingCookie, refreshDeliveryStatus: true };
+      : { processingCookie: detailDraft.processingCookie, deliveryTracking: detailDraft.deliveryTracking || '', refreshDeliveryStatus: true };
 
     const successText = type === 'cookie' ? 'Đã cập nhật cookie mới thành công.' : 'Đã cập nhật trạng thái giao hàng.';
     const updated = await patchOrder(detailDraft.id, payload, successText);
@@ -490,3 +491,4 @@ export function AdminOrdersTable({ initialOrders }: Props) {
     </>
   );
 }
+

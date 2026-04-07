@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const username = String(body.username || '').trim().toLowerCase();
   const password = String(body.password || '').trim();
   const roleRaw = String(body.role || 'customer').trim();
-  const role = roleRaw === 'admin' ? 'admin' : 'customer';
+  const role = roleRaw === 'admin' ? 'admin' : (roleRaw === 'ctv' ? 'ctv' : 'customer');
 
   if (!isValidUsername(username)) {
     return NextResponse.json({ error: 'Username phải từ 5 ký tự, chỉ gồm chữ thường không dấu, số hoặc gạch dưới.' }, { status: 400 });
@@ -127,7 +127,7 @@ export async function PATCH(request: Request) {
     payload.passwordHash = hashPassword(password);
     payload.passwordPlain = password;
   }
-  if (roleRaw !== undefined) payload.role = roleRaw === 'admin' ? 'admin' : 'customer';
+  if (roleRaw !== undefined) payload.role = roleRaw === 'admin' ? 'admin' : (roleRaw === 'ctv' ? 'ctv' : 'customer');
 
   try {
     if (nextUsername && nextUsername !== username) {

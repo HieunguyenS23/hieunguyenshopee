@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { UserRole } from '@/lib/types';
 
 type Props = {
   isAdmin: boolean;
+  role: UserRole;
   username: string;
 };
 
@@ -15,10 +17,10 @@ type UnreadPayload = {
   total: number;
 };
 
-export function MobileTabbar({ isAdmin, username }: Props) {
+export function MobileTabbar({ isAdmin, role, username }: Props) {
   const pathname = usePathname();
   const [unread, setUnread] = useState<UnreadPayload>({ unreadMessages: 0, unreadAnnouncements: 0, total: 0 });
-  const roleLabel = isAdmin ? 'Admin' : 'Khách hàng';
+  const roleLabel = isAdmin ? 'Admin' : (role === 'ctv' ? 'CTV' : 'Khách hàng');
   const profileInitial = (username[0] || 'U').toUpperCase();
 
   function toggleDrawer() {
@@ -61,16 +63,39 @@ export function MobileTabbar({ isAdmin, username }: Props) {
     };
   }, []);
 
+  const tabs = useMemo(() => {
+    if (isAdmin) {
+      return [
+        { href: '/orders/new', label: 'Lên đơn', badge: 0 },
+        { href: '/orders/history', label: 'Lịch sử', badge: 0 },
+        { href: '/admin/users', label: 'Tài khoản', badge: unread.total },
+        { href: '/profile', label: 'Hồ sơ', badge: 0 },
+      ];
+    }
+
+    if (role === 'ctv') {
+      return [
+        { href: '/orders/new', label: 'Lên đơn', badge: 0 },
+        { href: '/orders/history', label: 'Lịch sử', badge: 0 },
+        { href: '/admin/lookup', label: 'Kiểm tra', badge: 0 },
+        { href: '/profile', label: 'Hồ sơ', badge: 0 },
+        { href: '/announcements', label: 'Thông báo', badge: unread.total },
+      ];
+    }
+
+    return [
+      { href: '/orders/new', label: 'Lên đơn', badge: 0 },
+      { href: '/orders/history', label: 'Lịch sử', badge: 0 },
+      { href: '/profile', label: 'Hồ sơ', badge: 0 },
+      { href: '/announcements', label: 'Thông báo', badge: unread.total },
+    ];
+  }, [isAdmin, role, unread.total]);
+
   return (
     <header className="mobile-topbar combined-topbar app-topbar">
       <div className="profile-row app-topbar-row">
         <div className="profile-row-left">
-          <button
-            className="app-menu-btn"
-            type="button"
-            onPointerUp={toggleDrawer}
-            aria-label="Mở menu"
-          >
+          <button className="app-menu-btn" type="button" onPointerUp={toggleDrawer} aria-label="Mở menu">
             <span />
             <span />
             <span />
@@ -88,17 +113,14 @@ export function MobileTabbar({ isAdmin, username }: Props) {
         </form>
       </div>
 
-      <nav className="mobile-tabbar">
-        <Link className={pathname.startsWith('/orders') && !pathname.startsWith('/orders/history') ? 'is-active' : ''} href="/orders/new">Lên đơn</Link>
-        <Link className={pathname.startsWith('/orders/history') ? 'is-active' : ''} href="/orders/history">Lịch sử</Link>
-        <Link className={pathname.startsWith('/profile') ? 'is-active' : ''} href="/profile">Hồ sơ</Link>
-        <Link className={`tab-link-with-badge ${pathname.startsWith('/announcements') ? 'is-active' : ''}`} href="/announcements">
-          Thông báo
-          {unread.total > 0 ? <span className="tab-badge">{unread.total > 99 ? '99+' : unread.total}</span> : null}
-        </Link>
+      <nav className="mobile-tabbar" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+        {tabs.map((tab) => (
+          <Link key={tab.href} className={`tab-link-with-badge ${pathname.startsWith(tab.href) ? 'is-active' : ''}`} href={tab.href}>
+            {tab.label}
+            {tab.badge > 0 ? <span className="tab-badge">{tab.badge > 99 ? '99+' : tab.badge}</span> : null}
+          </Link>
+        ))}
       </nav>
     </header>
   );
 }
-
-

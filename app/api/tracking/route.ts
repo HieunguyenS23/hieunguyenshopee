@@ -1,8 +1,18 @@
 ﻿import { NextResponse } from 'next/server';
 import { requireSession } from '@/lib/session';
-import { getOrdersByUsername, updateOrder } from '@/lib/store';
+import { getOrders, getOrdersByUsername, updateOrder } from '@/lib/store';
 
 const TRACK_API_BASE = 'https://dodanhvu.dpdns.org';
+
+function isGTracking(tracking: string) {
+  return /^g/i.test(String(tracking || '').trim());
+}
+
+function normalizeCookie(raw: string) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  return value.startsWith('SPC_ST=') ? value : `SPC_ST=${value}`;
+}
 
 function pickCurrentStatus(result: any) {
   const value = String(result?.status || result?.latest?.desc || '').trim();
@@ -12,6 +22,19 @@ function pickCurrentStatus(result: any) {
   const first = records[0];
   const fallback = String(first?.desc || first?.status || '').trim();
   return fallback;
+}
+
+function pickStatusFromCheckData(data: any, tracking: string) {
+  const rows = Array.isArray(data?.orders) ? data.orders : [];
+  const trackingLower = String(tracking || '').trim().toLowerCase();
+  const target = rows.find((item: any) => String(item?.tracking || item?.trackingCode || '').trim().toLowerCase() === trackingLower) || rows[0];
+  if (!target) return '';
+  const status = String(target?.statusText || target?.status || '').trim();
+  return status;
+}
+
+function trackingMoreUrl(tracking: string) {
+  return `https://www.trackingmore.com/track?number=${encodeURIComponent(tracking)}&express=ghn`;
 }
 
 export async function GET(request: Request) {
@@ -26,6 +49,59 @@ export async function GET(request: Request) {
   }
 
   try {
+    let targetOrder: any = null;
+    if (orderId) {
+      const pool = session.role === 'admin' ? await getOrders() : await getOrdersByUsername(session.username);
+      targetOrder = pool.find((item) => item.id === orderId) || null;
+      if (!targetOrder) {
+        return NextResponse.json({ error: 'Không có quyền truy cập đơn này.' }, { status: 403 });
+      }
+    }
+
+    if (isGTracking(tracking)) {
+      let currentStatus = '';
+      const cookie = normalizeCookie(String(targetOrder?.processingCookie || ''));
+
+      if (cookie) {
+        try {
+          const checkRes = await fetch(`${TRACK_API_BASE}/api/check`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cookie }),
+            cache: 'no-store',
+          });
+          const checkData = await checkRes.json().catch(() => ({}));
+          if (checkRes.ok) {
+            currentStatus = pickStatusFromCheckData(checkData, tracking);
+          }
+        } catch {
+          // keep empty status
+        }
+      }
+
+      if (orderId && currentStatus) {
+        await updateOrder(orderId, {
+          deliveryStatus: currentStatus,
+          deliveryCheckedAt: new Date().toISOString(),
+          deliveryTracking: tracking,
+        });
+      }
+
+      return NextResponse.json({
+        ok: true,
+        tracking,
+        currentStatus,
+        provider: 'ghn',
+        externalUrl: trackingMoreUrl(tracking),
+        result: {
+          tracking,
+          status: currentStatus,
+          records: [],
+          timeline: [],
+        },
+      });
+    }
+
     const response = await fetch(`${TRACK_API_BASE}/api/spx`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -45,19 +121,11 @@ export async function GET(request: Request) {
     const currentStatus = pickCurrentStatus(result);
 
     if (orderId && currentStatus) {
-      let allowed = session.role === 'admin';
-      if (!allowed) {
-        const mine = await getOrdersByUsername(session.username);
-        allowed = mine.some((item) => item.id === orderId);
-      }
-
-      if (allowed) {
-        await updateOrder(orderId, {
-          deliveryStatus: currentStatus,
-          deliveryCheckedAt: new Date().toISOString(),
-          deliveryTracking: tracking,
-        });
-      }
+      await updateOrder(orderId, {
+        deliveryStatus: currentStatus,
+        deliveryCheckedAt: new Date().toISOString(),
+        deliveryTracking: tracking,
+      });
     }
 
     return NextResponse.json({
@@ -70,3 +138,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Không kết nối được API tra vận đơn.' }, { status: 500 });
   }
 }
+
