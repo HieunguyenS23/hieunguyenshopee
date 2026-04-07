@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { OrderRecord } from '@/lib/types';
 import { showToast } from '@/lib/client-toast';
 
@@ -108,6 +109,11 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
   const [trackingLoading, setTrackingLoading] = useState('');
   const [trackingDetail, setTrackingDetail] = useState<{ tracking: string; productName: string; result: TrackingResult } | null>(null);
   const [orderImagePreview, setOrderImagePreview] = useState('');
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!message && !error) return;
@@ -119,6 +125,17 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
     }, 3000);
     return () => window.clearTimeout(timer);
   }, [message, error]);
+
+  useEffect(() => {
+    if (!portalReady) return;
+    const hasModal = Boolean(trackingDetail || orderImagePreview);
+    if (!hasModal) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [portalReady, trackingDetail, orderImagePreview]);
 
   useEffect(() => {
     let stopped = false;
@@ -240,15 +257,9 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
               </div>
 
               <div className="order-meta-grid">
-                <span className="order-code-chip">ID đơn: {order.orderPublicId || 'Chưa có'}</span>
+                <span className="order-code-chip">Mã đơn hàng: {order.orderPublicId || 'Chưa có'}</span>
+                {!isCanceled ? <span className="amount-text">{order.orderAmount || 'Chưa có thành tiền'}</span> : null}
               </div>
-
-              {!isCanceled ? (
-                <div className="order-meta-grid">
-                  <span className="order-code-chip">Mã đơn hàng: {order.orderCode || 'Chưa có'}</span>
-                  <span className="amount-text">{order.orderAmount || 'Chưa có thành tiền'}</span>
-                </div>
-              ) : null}
 
               {!isCanceled ? (
                 <div className="order-row muted">
@@ -275,7 +286,7 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
         })}
       </div>
 
-      {trackingDetail ? (
+      {portalReady && trackingDetail ? createPortal(
         <div className="modal-backdrop tracking-modal-backdrop tracking-fullscreen" onClick={() => setTrackingDetail(null)}>
           <div className="modal-card modal-card-clean tracking-modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="modal-head modern modal-head-clean">
@@ -319,9 +330,9 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
             </div>
           </div>
         </div>
-      ) : null}
+      , document.body) : null}
 
-      {orderImagePreview ? (
+      {portalReady && orderImagePreview ? createPortal(
         <div className="modal-backdrop tracking-modal-backdrop tracking-fullscreen" onClick={() => setOrderImagePreview('')}>
           <div className="modal-card tracking-modal-card image-preview-modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-head modern modal-head-clean">
@@ -333,7 +344,7 @@ export function CustomerOrders({ initialOrders, initialError = '' }: Props) {
             </div>
           </div>
         </div>
-      ) : null}
+      , document.body) : null}
     </section>
   );
 }

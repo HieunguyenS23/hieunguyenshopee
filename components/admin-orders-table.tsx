@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { OrderRecord, OrderStatus, VoucherType } from '@/lib/types';
 import { showToast } from '@/lib/client-toast';
 
@@ -48,6 +49,7 @@ export function AdminOrdersTable({ initialOrders }: Props) {
   const [detailSaving, setDetailSaving] = useState(false);
   const [modalActionLoading, setModalActionLoading] = useState('');
   const [previewImage, setPreviewImage] = useState('');
+  const [portalReady, setPortalReady] = useState(false);
   const ordersRef = useRef<OrderRecord[]>(initialOrders);
   const batchRunningRef = useRef(false);
 
@@ -61,6 +63,21 @@ export function AdminOrdersTable({ initialOrders }: Props) {
     }, 3000);
     return () => window.clearTimeout(timer);
   }, [message, error]);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!portalReady) return;
+    const hasModal = Boolean(detailOrder || previewImage);
+    if (!hasModal) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [portalReady, detailOrder, previewImage]);
 
   async function patchOrder(orderId: string, payload: any, successText?: string, silent = false) {
     setSavingId(orderId);
@@ -289,7 +306,7 @@ export function AdminOrdersTable({ initialOrders }: Props) {
         <table className="sheet-table">
           <thead>
             <tr>
-              <th>ID đơn</th>
+              <th>Mã đơn hàng</th>
               <th>Người nhận</th>
               <th>Check</th>
               <th>Thành tiền</th>
@@ -344,7 +361,7 @@ export function AdminOrdersTable({ initialOrders }: Props) {
         </table>
       </div>
 
-      {detailOrder && detailDraft ? (
+      {portalReady && detailOrder && detailDraft ? createPortal(
         <div className="modal-backdrop" onClick={() => setDetailOrder(null)}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="modal-head modern">
@@ -367,8 +384,8 @@ export function AdminOrdersTable({ initialOrders }: Props) {
               </div>
 
               <div className="detail-grid editable-grid">
-                <div className="detail-item"><span>ID đơn</span><strong>{detailDraft.orderPublicId || 'Chưa có'}</strong></div>
-                <div className="detail-item"><span>Mã đơn hàng</span><strong>{detailDraft.orderCode || 'Chưa có'}</strong></div>
+                <div className="detail-item"><span>Mã đơn hàng</span><strong>{detailDraft.orderPublicId || 'Chưa có'}</strong></div>
+                <div className="detail-item"><span>Mã hệ thống</span><strong>{detailDraft.orderCode || 'Chưa có'}</strong></div>
                 <div className="detail-item"><span>Thành tiền</span><strong>{detailDraft.orderAmount || 'Chưa có'}</strong></div>
                 <div className="detail-item"><span>Username</span><strong>@{detailDraft.username}</strong></div>
                 <div className="detail-item"><span>Tên sản phẩm</span><strong>{detailDraft.productName || 'Chưa có'}</strong></div>
@@ -455,9 +472,9 @@ export function AdminOrdersTable({ initialOrders }: Props) {
             </div>
           </div>
         </div>
-      ) : null}
+      , document.body) : null}
 
-      {previewImage ? (
+      {portalReady && previewImage ? createPortal(
         <div className="modal-backdrop" onClick={() => setPreviewImage('')}>
           <div className="modal-card image-preview-modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-head">
@@ -469,7 +486,7 @@ export function AdminOrdersTable({ initialOrders }: Props) {
             </div>
           </div>
         </div>
-      ) : null}
+      , document.body) : null}
     </>
   );
 }

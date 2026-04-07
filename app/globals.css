@@ -240,12 +240,16 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 12000;
   background: rgba(42, 27, 15, 0.45);
   backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
+  align-items: center;
+  justify-items: center;
   padding: 16px;
+  overflow-y: auto;
+  isolation: isolate;
 }
 
 .modal-card {
@@ -1012,7 +1016,7 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
 }
 
 .col-delivery {
-  width: 300px;
+  width: 460px;
 }
 
 .app-frame-admin .sheet-table {
@@ -1027,7 +1031,7 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
 
 .app-frame-admin .sheet-table th:nth-child(1),
 .app-frame-admin .sheet-table td:nth-child(1) {
-  width: 120px;
+  width: 140px;
 }
 
 .app-frame-admin .sheet-table th:nth-child(2),
@@ -1042,35 +1046,30 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
 
 .app-frame-admin .sheet-table th:nth-child(4),
 .app-frame-admin .sheet-table td:nth-child(4) {
-  width: 140px;
+  width: 130px;
 }
 
 .app-frame-admin .sheet-table th:nth-child(5),
 .app-frame-admin .sheet-table td:nth-child(5) {
-  width: 130px;
+  width: 460px;
 }
 
 .app-frame-admin .sheet-table th:nth-child(6),
 .app-frame-admin .sheet-table td:nth-child(6) {
-  width: 360px;
+  width: 160px;
 }
 
 .app-frame-admin .sheet-table th:nth-child(7),
 .app-frame-admin .sheet-table td:nth-child(7) {
-  width: 190px;
+  width: 170px;
 }
 
-.app-frame-admin .sheet-table th:nth-child(8),
-.app-frame-admin .sheet-table td:nth-child(8) {
-  width: 130px;
-}
-
-.app-frame-admin .sheet-table td:nth-child(5) .amount-text {
+.app-frame-admin .sheet-table td:nth-child(4) .amount-text {
   font-size: 14px;
   font-weight: 700;
 }
 
-.app-frame-admin .sheet-table td:nth-child(6) .delivery-pill {
+.app-frame-admin .sheet-table td:nth-child(5) .delivery-pill {
   font-size: 15px;
   padding: 6px 12px;
   display: inline-block;
@@ -2146,9 +2145,9 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
 }
 
 .tracking-modal-backdrop {
-  z-index: 3000;
-  place-items: start center;
-  padding: 74px 14px 14px;
+  z-index: 12500;
+  place-items: center !important;
+  padding: 12px !important;
 }
 
 .tracking-modal-card {
@@ -2204,7 +2203,7 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
 
 @media (max-width: 760px) {
   .tracking-modal-backdrop {
-    padding-top: 88px;
+    padding: 8px !important;
   }
 
   .tracking-modal-card {
