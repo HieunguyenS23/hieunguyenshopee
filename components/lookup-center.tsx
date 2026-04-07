@@ -264,12 +264,36 @@ export function LookupCenter() {
       setQrStatusText('Đang chờ quét QR...');
 
       pollTimer.current = window.setInterval(async () => {
-        try {
-          const statusResult = await callLookup({ action: 'qr_status', sessionId });
+        try {          const statusResult = await callLookup({ action: 'qr_status', sessionId });
           const statusPayload = statusResult.data || {};
-          const status = String(statusPayload.status || '').trim().toLowerCase();
+          const statusData = statusPayload?.data && typeof statusPayload.data === 'object' ? statusPayload.data : statusPayload;
+          const status = String(statusData?.status || statusData?.state || '').trim().toLowerCase();
+          const cookieFromStatus = normalizeCookie(String(statusData?.cookie || statusPayload?.cookie || ''));
 
-          if (!status) return;
+          if (cookieFromStatus) {
+            if (pollTimer.current) {
+              window.clearInterval(pollTimer.current);
+              pollTimer.current = null;
+            }
+            setQrStatusText('Đăng nhập QR thành công.');
+            setCookieOutput(cookieFromStatus);
+            setCookieInput(cookieFromStatus);
+            showToast('QR login thành công, đã lấy cookie.', 'success');
+
+            const checked = await checkSingleCookie(cookieFromStatus);
+            if (checked) {
+              setOrders(checked.orders);
+              setUsername(checked.username || '');
+              setCookieOutput(checked.cookie);
+              setCookieInput(checked.cookie);
+            }
+            return;
+          }
+
+          if (!status) {
+            setQrStatusText('Đang chờ quét QR...');
+            return;
+          }
           if (status === 'waiting') {
             setQrStatusText('Đang chờ quét QR...');
             return;
@@ -554,4 +578,5 @@ export function LookupCenter() {
     </section>
   );
 }
+
 

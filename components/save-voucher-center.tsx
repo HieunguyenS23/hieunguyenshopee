@@ -106,6 +106,11 @@ export function SaveVoucherCenter() {
   }
 
   async function fetchCatalog() {
+    if (cookieLines.length === 0) {
+      showToast('Ban chua nhap cookie SPC_ST.', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch('/api/save-voucher/autopee', {
@@ -117,7 +122,10 @@ export function SaveVoucherCenter() {
         }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Khong tai duoc danh sach voucher tu Autopee.');
+      if (!response.ok) {
+        const detail = String(data?.error || data?.data?.error || data?.data?.message || 'Khong tai duoc danh sach voucher tu Autopee.');
+        throw new Error(detail);
+      }
 
       const vouchers = normalizeVouchers(data.data);
       setCatalog(vouchers);
@@ -306,3 +314,5 @@ export function SaveVoucherCenter() {
     </section>
   );
 }
+
+

@@ -143,7 +143,21 @@ export async function POST(request: Request) {
       const sessionId = String(body.sessionId || '').trim();
       if (!sessionId) return NextResponse.json({ error: 'Thiếu sessionId.' }, { status: 400 });
 
-      const result = await callUpstream(`/api/qr/status/${encodeURIComponent(sessionId)}`, { method: 'GET' });
+      let result = await callUpstream(`/api/qr/status/${encodeURIComponent(sessionId)}`, { method: 'GET' });
+
+      const resultData = result.data as any;
+      const nested = resultData?.data && typeof resultData.data === 'object' ? resultData.data : resultData;
+      const statusText = String(nested?.status || nested?.state || '').trim().toLowerCase();
+      const cookieText = String(nested?.cookie || resultData?.cookie || '').trim();
+
+      if (!result.ok || (!statusText && !cookieText)) {
+        const fallback = await callUpstream('/api/qr/status', {
+          method: 'POST',
+          body: JSON.stringify({ sessionId }),
+        });
+        if (fallback.ok) result = fallback;
+      }
+
       if (!result.ok) {
         return NextResponse.json({ error: String((result.data as any)?.error || 'Không kiểm tra được trạng thái QR.'), data: result.data }, { status: result.status });
       }

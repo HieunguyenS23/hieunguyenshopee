@@ -26,6 +26,29 @@ function normalizeMethod(methodRaw: string, fallback: 'GET' | 'POST' | 'PUT') {
   return fallback;
 }
 
+function normalizeCookie(raw: string) {
+  const value = String(raw || '').trim().replace(/^"+|"+$/g, '');
+  if (!value) return '';
+  if (/^SPC_ST=/i.test(value)) return value;
+  return `SPC_ST=${value}`;
+}
+
+function extractSpcSt(cookie: string) {
+  const match = String(cookie || '').match(/SPC_ST=([^;]+)/i);
+  return String(match?.[1] || '').trim();
+}
+
+function pickUpstreamError(data: any) {
+  const message =
+    data?.error ||
+    data?.message ||
+    data?.msg ||
+    data?.detail ||
+    data?.raw ||
+    '';
+  return String(message || '').trim();
+}
+
 async function callAutopee(input: {
   endpoint: string;
   method: 'GET' | 'POST' | 'PUT';
@@ -36,6 +59,8 @@ async function callAutopee(input: {
   const headers: Record<string, string> = {
     Accept: 'application/json, text/plain, */*',
     'Content-Type': 'application/json',
+    Origin: DEFAULT_BASE,
+    Referer: `${DEFAULT_BASE}/shopee/voucher`,
   };
 
   if (input.token) headers.Authorization = `Bearer ${input.token}`;
@@ -74,34 +99,51 @@ export async function POST(request: Request) {
     const body = await request.json();
     const action = String(body.action || '').toLowerCase();
     const token = String(body.token || process.env.AUTOPEE_BEARER_TOKEN || process.env.AUTOPEE_TOKEN || '').trim();
-    const cookie = String(body.cookie || '').trim();
+    const cookie = normalizeCookie(String(body.cookie || ''));
+    const spcSt = extractSpcSt(cookie);
 
     if (!token) {
       return NextResponse.json({ error: 'Thiếu Bearer token Autopee.' }, { status: 400 });
     }
 
     if (action === 'list') {
+      if (!cookie) {
+        return NextResponse.json({ error: 'Thiếu cookie SPC_ST để tải danh sách voucher.' }, { status: 400 });
+      }
+
       const endpoint = toUrl(String(body.endpoint || DEFAULT_LIST_ENDPOINT));
       const method = normalizeMethod(String(body.method || ''), 'POST');
       const payload = method === 'GET' ? undefined : {
         cookie,
-        spc_st: cookie,
+        spc_st: spcSt || cookie,
       };
 
       const result = await callAutopee({ endpoint, method, token, cookie, payload });
       if (!result.ok) {
-        return NextResponse.json({ error: 'API Autopee trả lỗi khi tải danh sách voucher.', status: result.status, data: result.data }, { status: 502 });
+        const upstream = pickUpstreamError(result.data as any);
+        return NextResponse.json(
+          {
+            error: `API Autopee trả lỗi khi tải danh sách voucher (${result.status})${upstream ? `: ${upstream}` : ''}`,
+            status: result.status,
+            data: result.data,
+          },
+          { status: 502 }
+        );
       }
       return NextResponse.json({ ok: true, data: result.data });
     }
 
     if (action === 'save') {
+      if (!cookie) {
+        return NextResponse.json({ error: 'Thiếu cookie SPC_ST để lưu voucher.' }, { status: 400 });
+      }
+
       const endpoint = toUrl(String(body.endpoint || DEFAULT_SAVE_ENDPOINT));
       const method = normalizeMethod(String(body.method || ''), 'POST');
       const voucher = (body.voucher || {}) as Record<string, unknown>;
       const payload = {
         cookie,
-        spc_st: cookie,
+        spc_st: spcSt || cookie,
         voucher_id: String(voucher.id || ''),
         voucher_code: String(voucher.code || ''),
         voucher_name: String(voucher.title || ''),
@@ -109,7 +151,15 @@ export async function POST(request: Request) {
 
       const result = await callAutopee({ endpoint, method, token, cookie, payload });
       if (!result.ok) {
-        return NextResponse.json({ error: 'API Autopee trả lỗi khi lưu voucher.', status: result.status, data: result.data }, { status: 502 });
+        const upstream = pickUpstreamError(result.data as any);
+        return NextResponse.json(
+          {
+            error: `API Autopee trả lỗi khi lưu voucher (${result.status})${upstream ? `: ${upstream}` : ''}`,
+            status: result.status,
+            data: result.data,
+          },
+          { status: 502 }
+        );
       }
       return NextResponse.json({ ok: true, data: result.data });
     }
