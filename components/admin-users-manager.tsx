@@ -402,6 +402,7 @@ export function AdminUsersManager({ initialUsers }: Props) {
                     <span>Vai trò</span>
                     <select value={detail.user.role} onChange={(e) => setDetail({ ...detail, user: { ...detail.user, role: e.target.value === 'admin' ? 'admin' : (e.target.value === 'ctv' ? 'ctv' : 'customer') } })}>
                       <option value="customer">customer</option>
+                      <option value="ctv">ctv</option>
                       <option value="admin">admin</option>
                     </select>
                   </label>
@@ -449,3 +450,5 @@ export function AdminUsersManager({ initialUsers }: Props) {
     </section>
   );
 }
+
+
