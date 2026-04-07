@@ -290,20 +290,18 @@ export function AdminOrdersTable({ initialOrders }: Props) {
           <thead>
             <tr>
               <th>ID đơn</th>
-              <th className="col-order-code">Mã đơn hàng</th>
               <th>Người nhận</th>
               <th>Check</th>
               <th>Thành tiền</th>
               <th className="col-delivery">Trạng thái giao hàng</th>
               <th>Mã vận đơn</th>
-              <th>Ảnh đơn</th>
               <th>Tác vụ</th>
             </tr>
           </thead>
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td className="sheet-empty" colSpan={9}>Không có đơn phù hợp bộ lọc.</td>
+                <td className="sheet-empty" colSpan={7}>Không có đơn phù hợp bộ lọc.</td>
               </tr>
             ) : null}
             {filteredOrders.map((order) => {
@@ -312,7 +310,6 @@ export function AdminOrdersTable({ initialOrders }: Props) {
               return (
                 <tr key={order.id}>
                   <td><span className="order-code-chip">{order.orderPublicId || 'Chưa có'}</span></td>
-                  <td className="col-order-code"><span className="order-code-chip">{order.orderCode || 'Chưa có'}</span></td>
                   <td>{order.recipientName}</td>
                   <td className="col-check">
                     <select
@@ -332,11 +329,6 @@ export function AdminOrdersTable({ initialOrders }: Props) {
                     </div>
                   </td>
                   <td><span className="tracking-cell">{order.deliveryTracking || 'Chưa có'}</span></td>
-                  <td>
-                    {order.orderImage ? (
-                      <button className="mini-action" type="button" onClick={() => setPreviewImage(order.orderImage || '')}>Xem ảnh</button>
-                    ) : <span className="tracking-cell">Chưa có</span>}
-                  </td>
                   <td>
                     <div className="icon-actions">
                       <button className="icon-action-btn" title="Cập nhật cookie" aria-label="Cập nhật cookie" disabled={savingId === order.id || !order.processingAccount || order.status === 'canceled'} onClick={() => refreshCookie(order)} type="button">↻</button>

@@ -7,41 +7,22 @@ import { hasAtLeastTwoWords, isValidVietnamPhone } from '@/lib/validators';
 
 const allowedStatuses: OrderStatus[] = ['pending', 'confirmed', 'ordered', 'canceled'];
 const TRACK_API_BASE = 'https://dodanhvu.dpdns.org';
-const ID_DIGITS = '0123456789';
-
-function randomDigits(length: number) {
-  let out = '';
-  for (let i = 0; i < length; i += 1) out += ID_DIGITS[Math.floor(Math.random() * ID_DIGITS.length)];
-  return out;
-}
-
-function isSixDigitId(value: string) {
-  return /^\d{6}$/.test(String(value || '').trim());
-}
-
-function generateOrderPublicId(existing: Set<string>) {
-  for (let i = 0; i < 200; i += 1) {
-    const candidate = randomDigits(6);
-    if (!existing.has(candidate)) return candidate;
-  }
-  return String(Math.floor(Math.random() * 900000) + 100000);
+function getOrderPublicIdFromInternalId(orderId: string) {
+  return String(orderId || '').replace(/-/g, '').slice(0, 8).toLowerCase();
 }
 
 async function ensureOrdersHavePublicId(orders: OrderRecord[]) {
-  const existing = new Set(orders.map((item) => String(item.orderPublicId || '').trim()).filter(Boolean));
 
-  const ensured = await Promise.all(
+    const ensured = await Promise.all(
     orders.map(async (order) => {
-      const current = String(order.orderPublicId || '').trim();
-      if (isSixDigitId(current)) return order;
-
-      const nextId = generateOrderPublicId(existing);
-      existing.add(nextId);
+      const expected = getOrderPublicIdFromInternalId(order.id);
+      const current = String(order.orderPublicId || '').trim().toLowerCase();
+      if (current === expected) return order;
 
       try {
-        return await updateOrder(order.id, { orderPublicId: nextId });
+        return await updateOrder(order.id, { orderPublicId: expected });
       } catch {
-        return { ...order, orderPublicId: nextId };
+        return { ...order, orderPublicId: expected };
       }
     })
   );
@@ -343,13 +324,11 @@ export async function POST(request: Request) {
     if (!settings.orderFormEnabled && session.role !== 'admin') {
       return NextResponse.json({ error: 'Form lên đơn đang tạm đóng. Vui lòng quay lại sau.' }, { status: 403 });
     }
-
-    const existingOrders = await getOrders();
-    const existingIds = new Set(existingOrders.map((item) => String(item.orderPublicId || '')));
-    const orderPublicId = generateOrderPublicId(existingIds);
+    const orderId = crypto.randomUUID();
+    const orderPublicId = getOrderPublicIdFromInternalId(orderId);
 
     const order = await createOrder({
-      id: crypto.randomUUID(),
+      id: orderId,
       orderPublicId,
       username: session.username,
       recipientName,
