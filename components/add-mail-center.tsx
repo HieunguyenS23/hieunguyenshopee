@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { ChangeEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { showToast } from '@/lib/client-toast';
 
 type AddMailResult = {
@@ -26,15 +26,10 @@ export function AddMailCenter() {
   const [results, setResults] = useState<AddMailResult[]>([]);
   const [summary, setSummary] = useState({ total: 0, ok: 0, failed: 0 });
 
-  const validRows = useMemo(() => rowsInput.split(/\r?\n/).map((line) => line.trim()).filter(Boolean), [rowsInput]);
-
-  async function onUploadFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    setRowsInput((prev) => `${prev}\n${text}`.trim());
-    event.target.value = '';
-  }
+  const validRows = useMemo(
+    () => rowsInput.split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+    [rowsInput]
+  );
 
   function resetInput() {
     setRowsInput('');
@@ -99,11 +94,9 @@ export function AddMailCenter() {
         />
 
         <div className="voucher-top-actions">
-          <label className="mini-action file-btn">
-            Tải file
-            <input type="file" accept=".txt,.csv" onChange={onUploadFile} hidden />
-          </label>
-          <button type="button" className="ghost-button" onClick={resetInput} disabled={loading}>Xóa ô nhập</button>
+          <button type="button" className="ghost-button" onClick={resetInput} disabled={loading}>
+            Xóa ô nhập
+          </button>
           <button type="button" className="primary-button" onClick={submitAddMail} disabled={loading}>
             {loading ? 'Đang gửi...' : 'Bắt đầu thêm mail'}
           </button>
@@ -138,7 +131,9 @@ export function AddMailCenter() {
                   <td title={item.cookie}>{shortCookie(item.cookie)}</td>
                   <td>{item.email || '(trống)'}</td>
                   <td>
-                    <span className={`mail-status-badge ${item.status ? 'ok' : 'error'}`}>{item.status ? 'Thành công' : 'Thất bại'}</span>
+                    <span className={`mail-status-badge ${item.status ? 'ok' : 'error'}`}>
+                      {item.status ? 'Thành công' : 'Thất bại'}
+                    </span>
                   </td>
                   <td>{item.message || '-'}</td>
                   <td>{item.proxy || '-'}</td>

@@ -280,6 +280,8 @@ export function LookupCenter() {
             }
             setQrStatusText('Đăng nhập QR thành công.');
             setQrCookieText(cookieFromStatus);
+            setQrSessionId('');
+            setQrImage('');
             setCookieOutput(cookieFromStatus);
             setCookieInput(cookieFromStatus);
             showToast('QR login thành công, đã lấy cookie.', 'success');
@@ -315,6 +317,8 @@ export function LookupCenter() {
             const cookie = normalizeCookie(String(statusPayload.cookie || ''));
             setQrStatusText('Đăng nhập QR thành công.');
             setQrCookieText(cookie);
+            setQrSessionId('');
+            setQrImage('');
             setCookieOutput(cookie);
             setCookieInput(cookie);
             showToast('QR login thành công, đã lấy cookie.', 'success');
@@ -598,6 +602,7 @@ export function LookupCenter() {
     </section>
   );
 }
+
 
 
 
