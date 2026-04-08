@@ -35,7 +35,6 @@ export function CookieToolsCenter() {
   const [loading, setLoading] = useState(false);
   const [sourceLinesText, setSourceLinesText] = useState('');
   const [newSpcStText, setNewSpcStText] = useState('');
-  const [replacedText, setReplacedText] = useState('');
 
   const sourceLines = useMemo(() => parseLines(sourceLinesText), [sourceLinesText]);
   const newSpcStLines = useMemo(() => parseLines(newSpcStText), [newSpcStText]);
@@ -92,27 +91,7 @@ export function CookieToolsCenter() {
     }
   }
 
-  async function copyNewSpcSt() {
-    const text = newSpcStLines.join('\n').trim();
-    if (!text) {
-      showToast('Chưa có kết quả SPC_ST để copy.', 'error');
-      return;
-    }
-    await navigator.clipboard.writeText(text);
-    showToast('Đã copy danh sách SPC_ST.', 'success');
-  }
-
-  async function copyReplaced() {
-    const text = String(replacedText || '').trim();
-    if (!text) {
-      showToast('Chưa có kết quả thay thế để copy.', 'error');
-      return;
-    }
-    await navigator.clipboard.writeText(text);
-    showToast('Đã copy kết quả thay thế.', 'success');
-  }
-
-  function replaceBatch() {
+  async function copyWithReplace() {
     if (sourceLines.length === 0) {
       showToast('Bạn chưa nhập chuỗi nguồn.', 'error');
       return;
@@ -122,17 +101,19 @@ export function CookieToolsCenter() {
       return;
     }
 
-    const out = sourceLines.map((row, index) => {
-      const cookie = newSpcStLines[index] || '';
-      return replaceSpcStInRow(row, cookie);
-    });
+    const replaced = sourceLines.map((row, index) => replaceSpcStInRow(row, newSpcStLines[index] || ''));
+    const text = replaced.join('\n').trim();
+    if (!text) {
+      showToast('Không có dữ liệu để copy.', 'error');
+      return;
+    }
 
-    setReplacedText(out.join('\n'));
+    await navigator.clipboard.writeText(text);
 
     if (newSpcStLines.length < sourceLines.length) {
-      showToast('Đã thay thế một phần (số SPC_ST mới ít hơn số dòng nguồn).', 'info');
+      showToast('Đã thay thế một phần và copy kết quả.', 'info');
     } else {
-      showToast('Đã thay thế SPC_ST vào chuỗi cũ thành công.', 'success');
+      showToast('Đã thay thế SPC_ST và copy kết quả.', 'success');
     }
   }
 
@@ -163,9 +144,9 @@ export function CookieToolsCenter() {
           <button className="primary-button" type="button" disabled={loading} onClick={getNewSpcStBatch}>
             {loading ? 'Đang lấy...' : 'Lấy SPC_ST mới'}
           </button>
-          <button className="ghost-button" type="button" disabled={loading} onClick={copyNewSpcSt}>Copy SPC_ST mới</button>
-          <button className="mini-action" type="button" disabled={loading} onClick={replaceBatch}>Thay thế</button>
-          <button className="mini-action" type="button" disabled={loading} onClick={copyReplaced}>Copy kết quả thay thế</button>
+          <button className="ghost-button" type="button" disabled={loading} onClick={copyWithReplace}>
+            Copy (Thay thế + Copy)
+          </button>
         </div>
       </article>
 
@@ -179,19 +160,6 @@ export function CookieToolsCenter() {
           value={newSpcStText}
           onChange={(e) => setNewSpcStText(e.target.value)}
           placeholder={'SPC_ST=...\nSPC_ST=...'}
-        />
-      </article>
-
-      <article className="hub-card">
-        <div className="hub-card-head">
-          <h3>Kết quả sau thay thế</h3>
-          <span className="muted">Đã thay SPC_ST mới vào chuỗi cũ theo từng dòng.</span>
-        </div>
-        <textarea
-          className="cookie-tools-textarea"
-          value={replacedText}
-          onChange={(e) => setReplacedText(e.target.value)}
-          placeholder={'user|pass|...|SPC_ST=...|time'}
         />
       </article>
     </section>

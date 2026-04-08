@@ -12,10 +12,8 @@ type AddMailResult = {
 const DEFAULT_KEY = 'otis_9lGRopDaIopztPXQ4C8glIj2Xp717AIK';
 
 export function AddMailCenter() {
-  const [endpoint, setEndpoint] = useState('https://otistx.com/add-email');
-  const [method, setMethod] = useState<'POST' | 'PUT'>('POST');
-  const [apiKey, setApiKey] = useState(DEFAULT_KEY);
   const [rowsInput, setRowsInput] = useState('');
+  const [apiKey, setApiKey] = useState(DEFAULT_KEY);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AddMailResult[]>([]);
   const [summary, setSummary] = useState({ total: 0, ok: 0, failed: 0 });
@@ -49,8 +47,6 @@ export function AddMailCenter() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          endpoint,
-          method,
           apiKey,
           rows: validRows.join('\n'),
         }),
@@ -79,26 +75,18 @@ export function AddMailCenter() {
       <div className="section-head">
         <div>
           <p className="eyebrow">Admin</p>
-          <h2>Thêm mail</h2>
+          <h2>Thêm hotmail</h2>
         </div>
         <span className="chip">{summary.ok}/{summary.total || validRows.length} OK</span>
       </div>
 
       <article className="hub-card">
         <div className="hub-card-head">
-          <h3>Cấu hình Otistx</h3>
-          <span className="muted">Thêm mail hàng loạt theo API key</span>
+          <h3>Cấu hình API Otistx</h3>
+          <span className="muted">Luồng bulk-mail, mỗi dòng 1 mail.</span>
         </div>
 
         <div className="form-grid compact">
-          <label><span>Endpoint</span><input value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://otistx.com/add-email" /></label>
-          <label>
-            <span>Method</span>
-            <select value={method} onChange={(e) => setMethod((e.target.value === 'PUT' ? 'PUT' : 'POST'))}>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-            </select>
-          </label>
           <label className="full-span"><span>API key</span><input value={apiKey} onChange={(e) => setApiKey(e.target.value)} /></label>
         </div>
       </article>
@@ -106,7 +94,7 @@ export function AddMailCenter() {
       <article className="hub-card">
         <div className="hub-card-head">
           <h3>Dữ liệu thêm mail</h3>
-          <span className="muted">Mỗi dòng là 1 record mail</span>
+          <span className="muted">Mỗi dòng là 1 record mail (giống bulk-mail).</span>
         </div>
 
         <textarea
