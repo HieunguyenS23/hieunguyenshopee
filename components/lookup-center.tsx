@@ -76,6 +76,7 @@ export function LookupCenter() {
   const [qrSessionId, setQrSessionId] = useState('');
   const [qrImage, setQrImage] = useState('');
   const [qrStatusText, setQrStatusText] = useState('Chưa tạo QR.');
+  const [qrCookieText, setQrCookieText] = useState('');
 
   const [spxResults, setSpxResults] = useState<SpxResult[]>([]);
   const [spxDetail, setSpxDetail] = useState<SpxResult | null>(null);
@@ -262,9 +263,11 @@ export function LookupCenter() {
       setQrSessionId(sessionId);
       setQrImage(qrImageSrc);
       setQrStatusText('Đang chờ quét QR...');
+      setQrCookieText('');
 
       pollTimer.current = window.setInterval(async () => {
-        try {          const statusResult = await callLookup({ action: 'qr_status', sessionId });
+        try {
+          const statusResult = await callLookup({ action: 'qr_status', sessionId });
           const statusPayload = statusResult.data || {};
           const statusData = statusPayload?.data && typeof statusPayload.data === 'object' ? statusPayload.data : statusPayload;
           const status = String(statusData?.status || statusData?.state || '').trim().toLowerCase();
@@ -276,6 +279,7 @@ export function LookupCenter() {
               pollTimer.current = null;
             }
             setQrStatusText('Đăng nhập QR thành công.');
+            setQrCookieText(cookieFromStatus);
             setCookieOutput(cookieFromStatus);
             setCookieInput(cookieFromStatus);
             showToast('QR login thành công, đã lấy cookie.', 'success');
@@ -310,6 +314,7 @@ export function LookupCenter() {
             }
             const cookie = normalizeCookie(String(statusPayload.cookie || ''));
             setQrStatusText('Đăng nhập QR thành công.');
+            setQrCookieText(cookie);
             setCookieOutput(cookie);
             setCookieInput(cookie);
             showToast('QR login thành công, đã lấy cookie.', 'success');
@@ -360,6 +365,7 @@ export function LookupCenter() {
 
     setQrSessionId('');
     setQrImage('');
+    setQrCookieText('');
     setQrStatusText('Đã hủy phiên QR.');
     showToast('Đã hủy phiên QR.', 'success');
   }
@@ -409,6 +415,15 @@ export function LookupCenter() {
     }
   }
 
+  async function copyQrCookie() {
+    const text = String(qrCookieText || '').trim();
+    if (!text) {
+      showToast('Chưa có SPC_ST từ QR để copy.', 'error');
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    showToast('Đã copy SPC_ST từ QR.', 'success');
+  }
   async function copyCookie() {
     const text = String(cookieOutput || '').trim();
     if (!text) {
@@ -475,6 +490,11 @@ export function LookupCenter() {
             </div>
             <p className="lookup-qr-status">{qrStatusText}</p>
             {qrImage ? <img className="lookup-qr-image" src={qrImage} alt="QR Login" /> : null}
+            <label className="full-span lookup-qr-cookie-box">
+              <span>SPC_ST từ QR</span>
+              <textarea value={qrCookieText} onChange={(e) => setQrCookieText(e.target.value)} placeholder="SPC_ST=..." />
+            </label>
+            <button className="ghost-button lookup-copy-btn" type="button" onClick={copyQrCookie}>Copy SPC_ST QR</button>
           </div>
         ) : null}
 
@@ -578,5 +598,11 @@ export function LookupCenter() {
     </section>
   );
 }
+
+
+
+
+
+
 
 

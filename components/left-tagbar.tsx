@@ -98,6 +98,7 @@ export function LeftTagbar({ isAdmin, role }: Props) {
         { href: '/admin/save-voucher', label: 'Lưu mã voucher', icon: '💾', section: 'Thao tác Shop' },
         { href: '/admin/add-mail', label: 'Thêm Mail', icon: '✉️', section: 'Thao tác Shop' },
         { href: '/admin/read-mail', label: 'Đọc Mail', icon: '📨', section: 'Thao tác Shop' },
+        { href: '/admin/cookie-tools', label: 'Thao tác cookie', icon: '🍪', section: 'Thao tác Shop' },
 
         { href: '/admin/users', label: 'Quản lí tài khoản', icon: '👤', section: 'Quản trị', badge: unreadTotal },
         { href: '/orders/history', label: 'Lịch sử đơn', icon: '🕘', section: 'Quản trị' },
@@ -157,3 +158,4 @@ export function LeftTagbar({ isAdmin, role }: Props) {
     </>
   );
 }
+
