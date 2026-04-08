@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   if (await findUser(username)) return NextResponse.json({ error: 'Username đã tồn tại.' }, { status: 409 });
 
   try {
-    const user = await createUser({ username, passwordHash: hashPassword(password), role: 'customer', createdAt: new Date().toISOString() });
+    const user = await createUser({ username, passwordHash: hashPassword(password), passwordPlain: password, role: 'customer', createdAt: new Date().toISOString() });
     return NextResponse.json({ ok: true, message: 'Đăng ký thành công. Vui lòng đăng nhập.', user: { username: user.username, role: user.role } });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Không thể đăng ký tài khoản.' }, { status: 500 });

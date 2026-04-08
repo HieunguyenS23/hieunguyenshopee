@@ -30,6 +30,42 @@ type SpxResult = {
   error?: string;
 };
 
+function toTimelineEpoch(raw?: string) {
+  const value = String(raw || '').trim();
+  if (!value) return 0;
+
+  const direct = Date.parse(value);
+  if (!Number.isNaN(direct)) return direct;
+
+  const normalized = value.replace(/\s+/g, ' ');
+  const match = normalized.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s+(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (match) {
+    const hour = Number(match[1] || 0);
+    const minute = Number(match[2] || 0);
+    const second = Number(match[3] || 0);
+    const day = Number(match[4] || 1);
+    const month = Number(match[5] || 1) - 1;
+    const year = Number(match[6] || 1970);
+    return new Date(year, month, day, hour, minute, second).getTime();
+  }
+
+  const dateOnly = normalized.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (dateOnly) {
+    const day = Number(dateOnly[1] || 1);
+    const month = Number(dateOnly[2] || 1) - 1;
+    const year = Number(dateOnly[3] || 1970);
+    return new Date(year, month, day).getTime();
+  }
+
+  return 0;
+}
+
+function getSortedTimeline(detail: SpxResult | null) {
+  if (!detail) return [] as Array<{ time?: string; description?: string; desc?: string; status?: string }>;
+  const source = Array.isArray(detail.timeline) && detail.timeline.length > 0 ? detail.timeline : (detail.records || []);
+  return [...source].sort((a, b) => toTimelineEpoch((b as any).time) - toTimelineEpoch((a as any).time));
+}
+
 function normalizeCookie(raw: string) {
   const value = String(raw || '').trim();
   if (!value) return '';
@@ -98,6 +134,8 @@ export function LookupCenter() {
     const shipping = orders.filter((item) => String(item.statusText || '').toLowerCase().includes('giao')).length;
     return { total, cancelable, shipping };
   }, [orders]);
+
+  const sortedSpxTimeline = useMemo(() => getSortedTimeline(spxDetail), [spxDetail]);
 
   async function callLookup(payload: Record<string, unknown>) {
     const response = await fetch('/api/admin/lookup', {
