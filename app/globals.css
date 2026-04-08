@@ -3287,3 +3287,62 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
   border: 1px solid #f2c1c1;
   color: #d63e3e;
 }
+.add-mail-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 180px) minmax(0, 1fr) minmax(0, 180px) minmax(0, 140px);
+  gap: 8px;
+}
+
+.add-mail-actions .primary-button {
+  font-weight: 800;
+}
+
+.mail-read-item {
+  border: 1px solid #d7e5f6;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.mail-read-item.ok {
+  border-color: #b5ead6;
+  background: #f1fff8;
+}
+
+.mail-read-item.error {
+  border-color: #f2c1c1;
+  background: #fff5f5;
+}
+
+.mail-read-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mail-read-item p {
+  margin: 0;
+  color: #436084;
+  font-size: 13px;
+}
+
+.cookie-tools-qr-wrap .lookup-qr-image {
+  width: 220px;
+  max-width: 100%;
+}
+
+@media (max-width: 980px) {
+  .add-mail-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .add-mail-actions {
+    grid-template-columns: 1fr;
+  }
+}
