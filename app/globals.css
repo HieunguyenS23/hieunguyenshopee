@@ -3232,3 +3232,58 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
     grid-template-columns: 1fr;
   }
 }
+.mail-result-table-wrap {
+  border: 1px solid #d6e5f6;
+  border-radius: 12px;
+  overflow: auto;
+  background: #fff;
+}
+
+.mail-result-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.mail-result-table th,
+.mail-result-table td {
+  border-bottom: 1px solid #e7effa;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 13px;
+  color: #2d4f79;
+  vertical-align: middle;
+}
+
+.mail-result-table th {
+  background: #edf5ff;
+  font-weight: 800;
+  color: #1e4f8d;
+}
+
+.mail-result-empty {
+  text-align: center !important;
+  color: #7288a5 !important;
+  padding: 16px !important;
+}
+
+.mail-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mail-status-badge.ok {
+  background: #e7fbf2;
+  border: 1px solid #b6e8d2;
+  color: #0d8f5c;
+}
+
+.mail-status-badge.error {
+  background: #fff0f0;
+  border: 1px solid #f2c1c1;
+  color: #d63e3e;
+}

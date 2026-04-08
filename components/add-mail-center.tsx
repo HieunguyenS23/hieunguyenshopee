@@ -5,15 +5,23 @@ import { showToast } from '@/lib/client-toast';
 
 type AddMailResult = {
   source: string;
-  ok: boolean;
+  cookie: string;
+  email: string;
+  proxy: string;
+  status: boolean;
   message: string;
 };
 
-const DEFAULT_KEY = 'otis_9lGRopDaIopztPXQ4C8glIj2Xp717AIK';
+function shortCookie(value: string) {
+  const raw = String(value || '').trim();
+  if (!raw) return '(trống)';
+  const token = raw.replace(/^SPC_ST=/i, '');
+  if (token.length <= 12) return raw;
+  return `${token.slice(0, 8)}...${token.slice(-4)}`;
+}
 
 export function AddMailCenter() {
   const [rowsInput, setRowsInput] = useState('');
-  const [apiKey, setApiKey] = useState(DEFAULT_KEY);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<AddMailResult[]>([]);
   const [summary, setSummary] = useState({ total: 0, ok: 0, failed: 0 });
@@ -43,13 +51,10 @@ export function AddMailCenter() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/add-mail', {
+      const response = await fetch('/api/email-additions/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          apiKey,
-          rows: validRows.join('\n'),
-        }),
+        body: JSON.stringify({ rows: validRows.join('\n') }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -62,7 +67,7 @@ export function AddMailCenter() {
         ok: Number(data?.summary?.ok || 0),
         failed: Number(data?.summary?.failed || 0),
       });
-      showToast('Đã gửi yêu cầu thêm mail thành công.', 'success');
+      showToast('Đã xử lí xong danh sách thêm mail.', 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Không thêm được mail.', 'error');
     } finally {
@@ -82,26 +87,15 @@ export function AddMailCenter() {
 
       <article className="hub-card">
         <div className="hub-card-head">
-          <h3>Cấu hình API Otistx</h3>
-          <span className="muted">Luồng bulk-mail, mỗi dòng 1 mail.</span>
-        </div>
-
-        <div className="form-grid compact">
-          <label className="full-span"><span>API key</span><input value={apiKey} onChange={(e) => setApiKey(e.target.value)} /></label>
-        </div>
-      </article>
-
-      <article className="hub-card">
-        <div className="hub-card-head">
           <h3>Dữ liệu thêm mail</h3>
-          <span className="muted">Mỗi dòng là 1 record mail (giống bulk-mail).</span>
+          <span className="muted">Format mỗi dòng: mail|SPC_ST hoặc mail|SPC_ST|proxy</span>
         </div>
 
         <textarea
           className="voucher-cookie-input"
           value={rowsInput}
           onChange={(e) => setRowsInput(e.target.value)}
-          placeholder={'email1|pass1\nemail2|pass2'}
+          placeholder={'email@gmail.com|SPC_ST=...\nemail2@gmail.com|SPC_ST=...|ip:port:user:pass'}
         />
 
         <div className="voucher-top-actions">
@@ -118,19 +112,40 @@ export function AddMailCenter() {
 
       <article className="hub-card">
         <div className="hub-card-head">
-          <h3>Kết quả</h3>
+          <h3>Kết quả thêm mail</h3>
           <span className="muted">Thành công: {summary.ok} • Lỗi: {summary.failed}</span>
         </div>
 
-        <div className="lookup-orders-grid">
-          {results.length === 0 ? <div className="empty-state">Chưa có kết quả xử lý.</div> : null}
-          {results.map((item, index) => (
-            <div key={`${item.source}-${index}`} className={`mail-result-item ${item.ok ? 'ok' : 'error'}`}>
-              <strong>{item.ok ? 'OK' : 'Lỗi'}</strong>
-              <p>{item.source}</p>
-              <small>{item.message}</small>
-            </div>
-          ))}
+        <div className="mail-result-table-wrap">
+          <table className="mail-result-table">
+            <thead>
+              <tr>
+                <th>Cookie</th>
+                <th>Email</th>
+                <th>Trạng thái</th>
+                <th>Thông báo</th>
+                <th>Proxy</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="mail-result-empty">Chưa có kết quả xử lý.</td>
+                </tr>
+              ) : null}
+              {results.map((item, index) => (
+                <tr key={`${item.source}-${index}`}>
+                  <td title={item.cookie}>{shortCookie(item.cookie)}</td>
+                  <td>{item.email || '(trống)'}</td>
+                  <td>
+                    <span className={`mail-status-badge ${item.status ? 'ok' : 'error'}`}>{item.status ? 'Thành công' : 'Thất bại'}</span>
+                  </td>
+                  <td>{item.message || '-'}</td>
+                  <td>{item.proxy || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </article>
     </section>
