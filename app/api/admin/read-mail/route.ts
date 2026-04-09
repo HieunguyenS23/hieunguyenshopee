@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/session';
 
-const URL_REGEX = /(https?:\/\/[\w\-._~:/?#[\]@!$&'()*+,;=%]+)/gi;
+const DLINK_REGEX = /https:\/\/vn\.shp\.ee\/dlink\/[a-zA-Z0-9]+/gi;
 
 function extractLinks(input: unknown): string[] {
   const found = new Set<string>();
@@ -10,7 +10,7 @@ function extractLinks(input: unknown): string[] {
     if (value === null || value === undefined) return;
 
     if (typeof value === 'string') {
-      const matches = value.match(URL_REGEX) || [];
+      const matches = value.match(DLINK_REGEX) || [];
       for (const item of matches) found.add(item.trim());
       return;
     }
@@ -180,3 +180,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Không đọc được mail.' }, { status: 500 });
   }
 }
+

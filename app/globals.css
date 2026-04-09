@@ -3346,3 +3346,195 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
     grid-template-columns: 1fr;
   }
 }
+.read-mail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.read-mail-col {
+  min-height: 420px;
+  display: grid;
+  gap: 10px;
+}
+
+.read-mail-list {
+  display: grid;
+  gap: 8px;
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.mail-read-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #d7e5f6;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.mail-read-item.is-active {
+  border-color: #8cc0ff;
+  box-shadow: 0 0 0 2px #e8f2ff;
+}
+
+.read-mail-regex {
+  display: grid;
+  gap: 6px;
+}
+
+.read-mail-regex span {
+  font-weight: 700;
+  color: #355782;
+  font-size: 13px;
+}
+
+.read-mail-regex input {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid #d6e5f6;
+  background: #fff;
+  padding: 9px 12px;
+  color: #2a4568;
+}
+
+.regex-error {
+  margin: 0;
+  color: #cf3e3e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.read-mail-link-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 140px);
+  gap: 8px;
+}
+
+.read-mail-links {
+  max-height: 460px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.read-mail-links a {
+  display: block;
+  border: 1px solid #d7e5f6;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #3a628f;
+  text-decoration: none;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.read-mail-links a:hover {
+  background: #f3f8ff;
+  border-color: #a6c6ef;
+}
+
+@media (max-width: 900px) {
+  .read-mail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .read-mail-col {
+    min-height: 0;
+  }
+
+  .read-mail-list,
+  .read-mail-links {
+    max-height: 320px;
+  }
+}
+
+.lookup-sheet-wrap {
+  overflow: auto;
+  border: 1px solid #d7e5f6;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.lookup-sheet-table {
+  width: 100%;
+  min-width: 1300px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.lookup-sheet-table thead th {
+  text-align: left;
+  background: linear-gradient(120deg, #1f7fd6, #2d64d3);
+  color: #fff;
+  padding: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.lookup-sheet-table td {
+  border-top: 1px solid #e8eff9;
+  color: #3b567b;
+  padding: 10px;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.lookup-sheet-table tbody tr:hover {
+  background: #f6faff;
+}
+
+.read-mail-links.grouped {
+  display: grid;
+  gap: 10px;
+}
+
+.read-mail-group {
+  border: 1px solid #d7e5f6;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.read-mail-group.is-active {
+  border-color: #8cc0ff;
+  box-shadow: 0 0 0 2px #e8f2ff;
+}
+
+.read-mail-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.read-mail-group-head strong {
+  color: #234a78;
+  font-size: 13px;
+}
+
+.read-mail-group-head span {
+  color: #5f7898;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.read-mail-group-empty {
+  margin: 0;
+  color: #6b82a1;
+  font-size: 12px;
+}
+
+.read-mail-group-links {
+  display: grid;
+  gap: 8px;
+}

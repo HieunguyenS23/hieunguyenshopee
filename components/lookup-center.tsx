@@ -581,8 +581,8 @@ export function LookupCenter() {
                   <h4>{spxDetail.tracking}</h4>
                   <p className="lookup-spx-current">{spxDetail.error || spxDetail.status || 'Chưa có trạng thái'}</p>
                   <div className="lookup-timeline">
-                    {(spxDetail.timeline || spxDetail.records || []).length === 0 ? <div className="empty-state">Chưa có timeline.</div> : null}
-                    {(spxDetail.timeline || spxDetail.records || []).map((item, idx) => (
+                    {sortedSpxTimeline.length === 0 ? <div className="empty-state">Chưa có timeline.</div> : null}
+                    {sortedSpxTimeline.map((item, idx) => (
                       <div className="lookup-timeline-item" key={`${item.time || idx}-${idx}`}>
                         <strong>{(item as any).description || (item as any).desc || (item as any).status || 'Không rõ mô tả'}</strong>
                         <small>{item.time || 'Không rõ thời gian'}</small>
@@ -637,9 +637,66 @@ export function LookupCenter() {
           ))}
         </div>
       </article>
+
+      <article className="hub-card">
+        <div className="hub-card-head">
+          <h3>Bảng Sheet đơn hàng</h3>
+          <span className="chip">{orders.length} dòng</span>
+        </div>
+        <div className="lookup-sheet-wrap">
+          <table className="lookup-sheet-table">
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Username</th>
+                <th>Tên KH</th>
+                <th>Tình trạng</th>
+                <th>Cookie</th>
+                <th>MVĐ</th>
+                <th>Trạng thái</th>
+                <th>Số tiền</th>
+                <th>SĐT Ship</th>
+                <th>Người nhận</th>
+                <th>SĐT nhận</th>
+                <th>Địa chỉ</th>
+                <th>Sản phẩm</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.length === 0 ? (
+                <tr><td colSpan={13}>Chưa có dữ liệu đơn hàng.</td></tr>
+              ) : null}
+              {orders.map((order, idx) => (
+                <tr key={String(order.orderId || idx) + '-' + String(idx)}>
+                  <td>{idx + 1}</td>
+                  <td>{username || '-'}</td>
+                  <td>{order.recipient || '-'}</td>
+                  <td><span className="status-pill status-ordered">{order.statusText || 'Chưa rõ'}</span></td>
+                  <td title={order._cookie || ''}>{((order._cookie || '').length > 24 ? (String(order._cookie || '').slice(0, 10) + '...' + String(order._cookie || '').slice(-10)) : (order._cookie || '-'))}</td>
+                  <td>{order.tracking || '-'}</td>
+                  <td>{order.statusText || '-'}</td>
+                  <td>{order.total || '-'}</td>
+                  <td>{order.shipPhone || '-'}</td>
+                  <td>{order.recipient || '-'}</td>
+                  <td>{order.phone || '-'}</td>
+                  <td>{order.address || '-'}</td>
+                  <td>{extractOrderProductName(order)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
     </section>
   );
 }
+
+
+
+
+
+
+
 
 
 
