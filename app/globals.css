@@ -4222,3 +4222,37 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
   .mmox-section-head h2 { font-size: 24px; }
   .mmox-link-top strong { font-size: 23px; }
 }
+
+.mmox-header-chatgpt {
+  background:
+    radial-gradient(720px 280px at 100% 0%, rgba(35, 226, 170, 0.22), transparent 70%),
+    linear-gradient(135deg, rgba(13, 39, 63, 0.96), rgba(12, 72, 66, 0.9));
+}
+
+.mmox-chatgpt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.mmox-chatgpt-card {
+  border: 1px solid rgba(129, 225, 206, 0.35);
+  border-radius: 14px;
+  padding: 14px;
+  background: linear-gradient(160deg, rgba(7, 40, 60, 0.78), rgba(11, 69, 59, 0.62));
+  color: #e9fff8;
+  text-decoration: none;
+  display: block;
+}
+
+.mmox-chatgpt-card strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+
+.mmox-chatgpt-card p {
+  margin: 0;
+  color: #c8f4e9;
+  line-height: 1.5;
+}

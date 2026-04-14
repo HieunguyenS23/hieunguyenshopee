@@ -109,7 +109,10 @@ export function LeftTagbar({ isAdmin, role }: Props) {
     : [
         { href: '/orders/new', label: 'Lên đơn', icon: '📝', section: 'Khách hàng' },
         { href: '/orders/history', label: 'Lịch sử', icon: '🕘', section: 'Khách hàng' },
-        ...(role === 'ctv' ? [{ href: '/admin/lookup', label: 'Kiểm tra vận đơn', icon: '📦', section: 'Khách hàng' }] : []),
+        ...(role === 'ctv' ? [
+          { href: '/admin/lookup', label: 'Kiểm tra vận đơn', icon: '📦', section: 'Khách hàng' },
+          { href: '/mmo-services', label: 'Dịch vụ MMO', icon: '💎', section: 'Khách hàng' },
+        ] : []),
         { href: '/profile', label: 'Hồ sơ', icon: '🪪', section: 'Khách hàng' },
         { href: '/announcements', label: 'Thông báo', icon: '🔔', section: 'Khách hàng', badge: unreadTotal },
       ];
@@ -159,6 +162,7 @@ export function LeftTagbar({ isAdmin, role }: Props) {
     </>
   );
 }
+
 
 
 

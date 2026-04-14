@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/session';
+import { requireAdminOrCtv } from '@/lib/session';
 
 const FRIEND_BASE = process.env.FRIENDSHOUSE_BASE_URL || 'https://friendshouse.io.vn';
 const FRIEND_TOKEN = process.env.FRIENDSHOUSE_BEARER_TOKEN || process.env.FRIEND_BEARER_TOKEN || process.env.AUTOPEE_BEARER_TOKEN || process.env.AUTOPEE_TOKEN || ''; 
@@ -23,7 +23,7 @@ function methodFor(action: Action) {
 }
 
 export async function POST(request: Request) {
-  await requireAdmin();
+  await requireAdminOrCtv();
 
   try {
     const body = await request.json();
@@ -94,4 +94,7 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+
 
