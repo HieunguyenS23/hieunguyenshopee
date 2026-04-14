@@ -3882,3 +3882,96 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
     align-items: stretch;
   }
 }
+
+.mmo-top-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mmo-metric-box {
+  border: 1px solid rgba(115, 178, 255, 0.35);
+  background: rgba(10, 23, 49, 0.62);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.mmo-metric-box span {
+  display: block;
+  font-size: 12px;
+  color: #a8c5f7;
+}
+
+.mmo-metric-box strong {
+  font-size: 22px;
+  color: #f8fcff;
+}
+
+.mmo-active-link-box {
+  border: 1px solid rgba(125, 214, 255, 0.35);
+  background: linear-gradient(145deg, rgba(18, 42, 83, 0.85), rgba(34, 75, 99, 0.72));
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.mmo-active-link-box strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #e3f3ff;
+  word-break: break-all;
+}
+
+.mmo-link-card-premium {
+  background: linear-gradient(135deg, rgba(14, 19, 44, 0.9), rgba(35, 13, 52, 0.9));
+  border: 1px solid rgba(153, 125, 255, 0.35);
+}
+
+.mmo-link-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mmo-link-tags {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.mmo-pill {
+  border: 1px solid rgba(255, 133, 185, 0.45);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #ffc4e3;
+  background: rgba(255, 89, 153, 0.12);
+}
+
+.mmo-link-substats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mmo-link-substats span {
+  border: 1px solid rgba(116, 169, 255, 0.35);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #b9d5ff;
+  background: rgba(31, 58, 110, 0.28);
+}
+
+.mmo-link-substats b {
+  color: #e7f2ff;
+}
+
+@media (max-width: 840px) {
+  .mmo-top-metrics {
+    grid-template-columns: 1fr;
+  }
+}

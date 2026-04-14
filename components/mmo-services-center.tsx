@@ -3,15 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { showToast } from '@/lib/client-toast';
 
-type VipPackage = {
-  id: string;
-  name: string;
-  price_vnd: number;
-  duration_days: number;
-  credits?: string;
-  daily_bonus?: number;
-};
-
 type NetflixLink = {
   id: number;
   label?: string;
@@ -21,8 +12,6 @@ type NetflixLink = {
   max_streams?: number;
   opens_last_60m?: number;
   load_level?: string;
-  has_pc?: boolean;
-  has_mobile?: boolean;
   expired?: boolean;
 };
 
@@ -42,25 +31,25 @@ async function callMmoApi(action: string, payload: Record<string, unknown> = {})
 export function MmoServicesCenter() {
   const [loading, setLoading] = useState(false);
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
-  const [vipPackages, setVipPackages] = useState<VipPackage[]>([]);
   const [links, setLinks] = useState<NetflixLink[]>([]);
   const [claimingId, setClaimingId] = useState<number | null>(null);
   const [currentToken, setCurrentToken] = useState('');
+  const [currentLinkUrl, setCurrentLinkUrl] = useState('');
 
   const activeLinks = useMemo(() => links.filter((item) => !item.expired), [links]);
-  const dashboardItems = useMemo(() => Object.entries(dashboard || {}).slice(0, 8), [dashboard]);
+  const dashboardItems = useMemo(() => Object.entries(dashboard || {}).slice(0, 6), [dashboard]);
+  const totalUsing = useMemo(() => activeLinks.reduce((sum, link) => sum + Number(link.active_count || 0), 0), [activeLinks]);
+  const totalSlots = useMemo(() => activeLinks.reduce((sum, link) => sum + Number(link.max_streams || 0), 0), [activeLinks]);
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [dashboardData, packagesData, linksData] = await Promise.all([
+      const [dashboardData, linksData] = await Promise.all([
         callMmoApi('dashboard').catch(() => null),
-        callMmoApi('packages'),
         callMmoApi('links'),
       ]);
 
       setDashboard(dashboardData && typeof dashboardData === 'object' ? dashboardData : null);
-      setVipPackages(Array.isArray(packagesData?.packages) ? packagesData.packages : []);
       setLinks(Array.isArray(linksData?.links) ? linksData.links : []);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Khong tai duoc du lieu MMO.', 'error');
@@ -73,6 +62,11 @@ export function MmoServicesCenter() {
     loadAll();
   }, []);
 
+  function buildLocalOpenLink(token: string) {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/api/mmo/open?token=${encodeURIComponent(token)}`;
+  }
+
   async function claimLink(linkId: number) {
     try {
       setClaimingId(linkId);
@@ -81,8 +75,9 @@ export function MmoServicesCenter() {
       setCurrentToken(token);
 
       if (token) {
-        const openUrl = `https://friendshouse.io.vn/api/netflix-free/open?token=${encodeURIComponent(token)}`;
-        window.open(openUrl, '_blank', 'noopener,noreferrer');
+        const localLink = buildLocalOpenLink(token);
+        setCurrentLinkUrl(localLink);
+        window.open(localLink, '_blank', 'noopener,noreferrer');
       }
 
       showToast('Lay link Netflix thanh cong.', 'success');
@@ -91,6 +86,20 @@ export function MmoServicesCenter() {
       showToast(error instanceof Error ? error.message : 'Khong claim duoc link.', 'error');
     } finally {
       setClaimingId(null);
+    }
+  }
+
+  async function copyCurrentLink() {
+    if (!currentLinkUrl) {
+      showToast('Chua co link de copy.', 'error');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(currentLinkUrl);
+      showToast('Da copy link dang nhap noi bo.', 'success');
+    } catch {
+      showToast('Khong copy duoc link.', 'error');
     }
   }
 
@@ -103,6 +112,7 @@ export function MmoServicesCenter() {
     try {
       await callMmoApi('release', { token: currentToken });
       setCurrentToken('');
+      setCurrentLinkUrl('');
       showToast('Da tra link thanh cong.', 'success');
       await loadAll();
     } catch (error) {
@@ -116,17 +126,38 @@ export function MmoServicesCenter() {
         <div>
           <p className="mmo-kicker">MMO Premium</p>
           <h1>Dich Vu MMO</h1>
-          <p className="mmo-sub">Trang doc lap FriendsHouse API cho tai khoan admin.</p>
+          <p className="mmo-sub">Trang doc lap cho thao tac link dang nhap, khong can cau hinh tren giao dien.</p>
         </div>
         <div className="mmo-header-actions">
           <button type="button" className="mmo-btn mmo-btn-primary" onClick={loadAll} disabled={loading}>
             {loading ? 'Dang dong bo...' : 'Dong bo du lieu'}
           </button>
-          <button type="button" className="mmo-btn mmo-btn-secondary" onClick={releaseCurrent} disabled={loading || !currentToken}>
-            Tra link dang dung
-          </button>
         </div>
       </header>
+
+      <div className="mmo-top-metrics">
+        <div className="mmo-metric-box">
+          <span>Link kha dung</span>
+          <strong>{activeLinks.length}</strong>
+        </div>
+        <div className="mmo-metric-box">
+          <span>Nguoi dang dung</span>
+          <strong>{totalUsing}/{totalSlots || 0}</strong>
+        </div>
+      </div>
+
+      {currentLinkUrl ? (
+        <section className="mmo-active-link-box">
+          <div>
+            <p className="mmo-kicker">Link dang nhap da lay</p>
+            <strong>{currentLinkUrl}</strong>
+          </div>
+          <div className="mmo-header-actions">
+            <button type="button" className="mmo-btn mmo-btn-primary" onClick={copyCurrentLink}>Copy link dang nhap</button>
+            <button type="button" className="mmo-btn mmo-btn-secondary" onClick={releaseCurrent}>Tra link</button>
+          </div>
+        </section>
+      ) : null}
 
       <div className="mmo-grid mmo-grid-stats">
         {dashboardItems.length === 0 ? <div className="mmo-empty">Chua co du lieu dashboard.</div> : null}
@@ -140,36 +171,27 @@ export function MmoServicesCenter() {
 
       <section className="mmo-section">
         <div className="mmo-section-head">
-          <h2>Goi VIP</h2>
-          <span>{vipPackages.length} goi</span>
-        </div>
-        <div className="mmo-grid mmo-grid-vip">
-          {vipPackages.length === 0 ? <div className="mmo-empty">Chua co goi VIP.</div> : null}
-          {vipPackages.map((pkg) => (
-            <article className="mmo-vip-card" key={pkg.id}>
-              <p className="mmo-vip-id">{pkg.id}</p>
-              <h3>{pkg.name}</h3>
-              <strong>{Number(pkg.price_vnd || 0).toLocaleString('vi-VN')}d</strong>
-              <small>{pkg.duration_days} ngay • {pkg.credits || 'Unlimited'}</small>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mmo-section">
-        <div className="mmo-section-head">
-          <h2>Netflix Free Links</h2>
-          <span>{activeLinks.length} link kha dung</span>
+          <h2>Danh sach link</h2>
+          <span>{activeLinks.length} link</span>
         </div>
         <div className="mmo-links">
           {activeLinks.length === 0 ? <div className="mmo-empty">Khong co link kha dung.</div> : null}
           {activeLinks.map((link) => (
-            <article className="mmo-link-card" key={link.id}>
-              <div>
+            <article className="mmo-link-card mmo-link-card-premium" key={link.id}>
+              <div className="mmo-link-main">
                 <strong>{link.label || `Link #${link.id}`}</strong>
-                <p>{link.plan || 'Premium'} • {link.country || '--'} • Dang dung {Number(link.active_count || 0)}/{Number(link.max_streams || 0)}</p>
-                <small>Load {link.load_level || '--'} • 60p {Number(link.opens_last_60m || 0)} luot</small>
+                <div className="mmo-link-tags">
+                  <span className="mmo-pill">{link.plan || 'Premium'}</span>
+                  <span className="mmo-pill">{link.country || '--'}</span>
+                </div>
               </div>
+
+              <div className="mmo-link-substats">
+                <span>Dang dung: <b>{Number(link.active_count || 0)}/{Number(link.max_streams || 0)}</b></span>
+                <span>1h: <b>{Number(link.opens_last_60m || 0)} luot</b></span>
+                <span>Load: <b>{link.load_level || '--'}</b></span>
+              </div>
+
               <button
                 type="button"
                 className="mmo-btn mmo-btn-small"
