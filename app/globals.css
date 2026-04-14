@@ -3643,3 +3643,242 @@ input:focus, select:focus { outline: 2px solid rgba(15, 142, 122, 0.2); border-c
     align-items: stretch;
   }
 }
+
+/* Standalone MMO page */
+.mmo-page-root {
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 600px at 10% 0%, rgba(28, 45, 92, 0.65), transparent 65%),
+    radial-gradient(900px 500px at 100% 100%, rgba(115, 32, 87, 0.55), transparent 70%),
+    linear-gradient(135deg, #060a1c 0%, #091227 50%, #13091f 100%);
+  padding: clamp(12px, 3vw, 28px);
+}
+
+.mmo-page-shell {
+  max-width: 1220px;
+  margin: 0 auto;
+}
+
+.mmo-premium-shell {
+  color: #eef5ff;
+  display: grid;
+  gap: 14px;
+}
+
+.mmo-premium-header {
+  border: 1px solid rgba(121, 154, 233, 0.35);
+  background: linear-gradient(145deg, rgba(19, 34, 73, 0.9), rgba(83, 37, 112, 0.72));
+  border-radius: 18px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.mmo-kicker {
+  margin: 0 0 4px;
+  color: #9ec6ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mmo-premium-header h1 {
+  margin: 0;
+  font-size: clamp(24px, 3.2vw, 34px);
+  line-height: 1.05;
+}
+
+.mmo-sub {
+  margin: 8px 0 0;
+  color: #c8dbff;
+  font-size: 13px;
+}
+
+.mmo-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mmo-btn {
+  border: 1px solid rgba(140, 176, 255, 0.35);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.mmo-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mmo-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.mmo-btn-primary {
+  color: #fff;
+  background: linear-gradient(90deg, #0ea5a3 0%, #2563eb 100%);
+}
+
+.mmo-btn-secondary {
+  color: #d8e8ff;
+  background: rgba(20, 34, 62, 0.7);
+}
+
+.mmo-btn-small {
+  color: #ffffff;
+  background: linear-gradient(90deg, #9333ea 0%, #2563eb 100%);
+  padding: 8px 12px;
+}
+
+.mmo-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.mmo-grid-stats {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.mmo-grid-vip {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.mmo-stat-card {
+  border: 1px solid rgba(126, 165, 255, 0.3);
+  background: rgba(10, 23, 49, 0.62);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.mmo-stat-card span {
+  display: block;
+  color: #a8c5f7;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.mmo-stat-card strong {
+  font-size: 18px;
+}
+
+.mmo-section {
+  border: 1px solid rgba(126, 165, 255, 0.28);
+  background: rgba(8, 18, 38, 0.7);
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.mmo-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mmo-section-head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.mmo-section-head span {
+  color: #bed3f3;
+  font-size: 12px;
+}
+
+.mmo-vip-card {
+  border: 1px solid rgba(255, 216, 145, 0.35);
+  background: linear-gradient(160deg, rgba(70, 39, 2, 0.6), rgba(47, 31, 7, 0.45));
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.mmo-vip-id {
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: #ffd79a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mmo-vip-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.mmo-vip-card strong {
+  display: block;
+  margin: 8px 0 4px;
+  color: #ffd166;
+  font-size: 20px;
+}
+
+.mmo-vip-card small {
+  color: #f7e3c0;
+  font-size: 12px;
+}
+
+.mmo-links {
+  display: grid;
+  gap: 10px;
+}
+
+.mmo-link-card {
+  border: 1px solid rgba(115, 178, 255, 0.32);
+  background: rgba(8, 21, 48, 0.62);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.mmo-link-card strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.mmo-link-card p,
+.mmo-link-card small {
+  margin: 2px 0 0;
+  color: #b8d2f7;
+  font-size: 12px;
+}
+
+.mmo-empty {
+  border: 1px dashed rgba(142, 172, 227, 0.45);
+  border-radius: 12px;
+  padding: 14px;
+  color: #bdd0ee;
+  text-align: center;
+  font-size: 13px;
+}
+
+@media (max-width: 840px) {
+  .mmo-premium-header {
+    grid-template-columns: 1fr;
+  }
+
+  .mmo-header-actions {
+    justify-content: flex-start;
+  }
+
+  .mmo-link-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

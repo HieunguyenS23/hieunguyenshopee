@@ -1,12 +1,7 @@
-﻿import { requireAdmin } from '@/lib/session';
-import { MmoServicesCenter } from '@/components/mmo-services-center';
+﻿import { redirect } from 'next/navigation';
+import { requireAdmin } from '@/lib/session';
 
 export default async function AdminMmoServicesPage() {
   await requireAdmin();
-
-  return (
-    <div className="page-stack page-stack-spaced">
-      <MmoServicesCenter />
-    </div>
-  );
+  redirect('/mmo-services');
 }

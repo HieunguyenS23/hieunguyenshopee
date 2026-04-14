@@ -96,7 +96,7 @@ export function LeftTagbar({ isAdmin, role }: Props) {
 
         { href: '/admin/vouchers', label: 'Quản lí voucher', icon: '🎟', section: 'Thao tác Shop' },
         { href: '/admin/save-voucher', label: 'Lưu mã voucher', icon: '💾', section: 'Thao tác Shop' },
-        { href: '/admin/mmo-services', label: 'Dịch vụ MMO', icon: '💎', section: 'Thao tác Shop' },
+        { href: '/mmo-services', label: 'Dịch vụ MMO', icon: '💎', section: 'Thao tác Shop' },
         { href: '/admin/add-mail', label: 'Thêm Mail', icon: '✉️', section: 'Thao tác Shop' },
         { href: '/admin/read-mail', label: 'Đọc Mail', icon: '📨', section: 'Thao tác Shop' },
         { href: '/admin/cookie-tools', label: 'Thao tác cookie', icon: '🍪', section: 'Thao tác Shop' },
@@ -159,5 +159,6 @@ export function LeftTagbar({ isAdmin, role }: Props) {
     </>
   );
 }
+
 
 

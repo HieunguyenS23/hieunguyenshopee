@@ -2,7 +2,7 @@
 import { requireAdmin } from '@/lib/session';
 
 const FRIEND_BASE = process.env.FRIENDSHOUSE_BASE_URL || 'https://friendshouse.io.vn';
-const FRIEND_TOKEN = process.env.FRIENDSHOUSE_BEARER_TOKEN || process.env.FRIEND_BEARER_TOKEN || '';
+const FRIEND_TOKEN = process.env.FRIENDSHOUSE_BEARER_TOKEN || process.env.FRIEND_BEARER_TOKEN || process.env.AUTOPEE_BEARER_TOKEN || process.env.AUTOPEE_TOKEN || ''; 
 
 type Action = 'packages' | 'dashboard' | 'usage' | 'links' | 'claim' | 'release' | 'open';
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     if (!FRIEND_TOKEN.trim()) {
-      return NextResponse.json({ error: 'Thiếu FRIENDSHOUSE_BEARER_TOKEN trên server.' }, { status: 400 });
+      return NextResponse.json({ error: 'Thieu token server. Dat FRIENDSHOUSE_BEARER_TOKEN (hoac FRIEND_BEARER_TOKEN/AUTOPEE_BEARER_TOKEN) trong Vercel Environment Variables.' }, { status: 400 });
     }
 
     const method = methodFor(action);
@@ -94,3 +94,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

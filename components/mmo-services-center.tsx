@@ -35,7 +35,7 @@ async function callMmoApi(action: string, payload: Record<string, unknown> = {})
     body: JSON.stringify({ action, ...payload }),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data?.error || 'Lỗi gọi API MMO');
+  if (!response.ok) throw new Error(data?.error || 'Loi goi API MMO');
   return data?.data;
 }
 
@@ -48,6 +48,7 @@ export function MmoServicesCenter() {
   const [currentToken, setCurrentToken] = useState('');
 
   const activeLinks = useMemo(() => links.filter((item) => !item.expired), [links]);
+  const dashboardItems = useMemo(() => Object.entries(dashboard || {}).slice(0, 8), [dashboard]);
 
   async function loadAll() {
     setLoading(true);
@@ -62,7 +63,7 @@ export function MmoServicesCenter() {
       setVipPackages(Array.isArray(packagesData?.packages) ? packagesData.packages : []);
       setLinks(Array.isArray(linksData?.links) ? linksData.links : []);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Không tải được dữ liệu MMO.', 'error');
+      showToast(error instanceof Error ? error.message : 'Khong tai duoc du lieu MMO.', 'error');
     } finally {
       setLoading(false);
     }
@@ -84,10 +85,10 @@ export function MmoServicesCenter() {
         window.open(openUrl, '_blank', 'noopener,noreferrer');
       }
 
-      showToast('Lấy link Netflix thành công.', 'success');
+      showToast('Lay link Netflix thanh cong.', 'success');
       await loadAll();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Không claim được link.', 'error');
+      showToast(error instanceof Error ? error.message : 'Khong claim duoc link.', 'error');
     } finally {
       setClaimingId(null);
     }
@@ -95,110 +96,92 @@ export function MmoServicesCenter() {
 
   async function releaseCurrent() {
     if (!currentToken) {
-      showToast('Chưa có token link đang dùng để trả.', 'error');
+      showToast('Chua co token dang dung de tra link.', 'error');
       return;
     }
 
     try {
       await callMmoApi('release', { token: currentToken });
       setCurrentToken('');
-      showToast('Đã trả link thành công.', 'success');
+      showToast('Da tra link thanh cong.', 'success');
       await loadAll();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Không trả được link.', 'error');
+      showToast(error instanceof Error ? error.message : 'Khong tra duoc link.', 'error');
     }
   }
 
-  const dashboardItems = Object.entries(dashboard || {}).slice(0, 6);
-
   return (
-    <section className="phone-card users-manager-wrap mmo-shell">
-      <div className="section-head">
+    <section className="mmo-premium-shell">
+      <header className="mmo-premium-header">
         <div>
-          <p className="eyebrow">Admin</p>
-          <h2>DICH VU MMO</h2>
+          <p className="mmo-kicker">MMO Premium</p>
+          <h1>Dich Vu MMO</h1>
+          <p className="mmo-sub">Trang doc lap FriendsHouse API cho tai khoan admin.</p>
         </div>
-        <span className="chip">Premium</span>
-      </div>
-
-      <article className="hub-card mmo-hero">
-        <div>
-          <h3>FriendsHouse Integration</h3>
-          <p className="muted">Da ket noi API user tu friendshouse.io.vn bang Bearer token tren server.</p>
-        </div>
-        <div className="voucher-top-actions">
-          <button type="button" className="primary-button" onClick={loadAll} disabled={loading}>
-            {loading ? 'Dang tai...' : 'Tai du lieu MMO'}
+        <div className="mmo-header-actions">
+          <button type="button" className="mmo-btn mmo-btn-primary" onClick={loadAll} disabled={loading}>
+            {loading ? 'Dang dong bo...' : 'Dong bo du lieu'}
           </button>
-          <button type="button" className="ghost-button" onClick={releaseCurrent} disabled={loading || !currentToken}>
+          <button type="button" className="mmo-btn mmo-btn-secondary" onClick={releaseCurrent} disabled={loading || !currentToken}>
             Tra link dang dung
           </button>
         </div>
-      </article>
+      </header>
 
-      <article className="hub-card">
-        <div className="hub-card-head">
-          <h3>Thong tin tai khoan</h3>
-          <span className="muted">Du lieu dashboard tu API user</span>
-        </div>
-        <div className="mmo-stats-grid">
-          {dashboardItems.length === 0 ? <p className="muted">Chua co du lieu dashboard.</p> : null}
-          {dashboardItems.map(([key, value]) => (
-            <div className="mmo-stat" key={key}>
-              <span>{key}</span>
-              <strong>{String(value ?? '-')}</strong>
-            </div>
-          ))}
-        </div>
-      </article>
+      <div className="mmo-grid mmo-grid-stats">
+        {dashboardItems.length === 0 ? <div className="mmo-empty">Chua co du lieu dashboard.</div> : null}
+        {dashboardItems.map(([key, value]) => (
+          <article key={key} className="mmo-stat-card">
+            <span>{key}</span>
+            <strong>{String(value ?? '-')}</strong>
+          </article>
+        ))}
+      </div>
 
-      <article className="hub-card">
-        <div className="hub-card-head">
-          <h3>Goi VIP</h3>
-          <span className="muted">Danh sach goi VIP tu API payment</span>
+      <section className="mmo-section">
+        <div className="mmo-section-head">
+          <h2>Goi VIP</h2>
+          <span>{vipPackages.length} goi</span>
         </div>
-        <div className="mmo-vip-grid">
-          {vipPackages.length === 0 ? <div className="empty-state">Chua co goi VIP.</div> : null}
+        <div className="mmo-grid mmo-grid-vip">
+          {vipPackages.length === 0 ? <div className="mmo-empty">Chua co goi VIP.</div> : null}
           {vipPackages.map((pkg) => (
-            <div className="mmo-vip-card" key={pkg.id}>
-              <p className="eyebrow">{pkg.id}</p>
-              <h4>{pkg.name}</h4>
+            <article className="mmo-vip-card" key={pkg.id}>
+              <p className="mmo-vip-id">{pkg.id}</p>
+              <h3>{pkg.name}</h3>
               <strong>{Number(pkg.price_vnd || 0).toLocaleString('vi-VN')}d</strong>
               <small>{pkg.duration_days} ngay • {pkg.credits || 'Unlimited'}</small>
-            </div>
+            </article>
           ))}
         </div>
-      </article>
+      </section>
 
-      <article className="hub-card">
-        <div className="hub-card-head">
-          <h3>Netflix Free Links</h3>
-          <span className="muted">Chon link va bam "Lay link" de mo tab moi</span>
+      <section className="mmo-section">
+        <div className="mmo-section-head">
+          <h2>Netflix Free Links</h2>
+          <span>{activeLinks.length} link kha dung</span>
         </div>
-
-        <div className="mmo-links-list">
-          {activeLinks.length === 0 ? <div className="empty-state">Khong co link kha dung.</div> : null}
+        <div className="mmo-links">
+          {activeLinks.length === 0 ? <div className="mmo-empty">Khong co link kha dung.</div> : null}
           {activeLinks.map((link) => (
-            <div className="mmo-link-item" key={link.id}>
+            <article className="mmo-link-card" key={link.id}>
               <div>
                 <strong>{link.label || `Link #${link.id}`}</strong>
                 <p>{link.plan || 'Premium'} • {link.country || '--'} • Dang dung {Number(link.active_count || 0)}/{Number(link.max_streams || 0)}</p>
-                <small>Load: {link.load_level || '--'} • 60p: {Number(link.opens_last_60m || 0)} luot</small>
+                <small>Load {link.load_level || '--'} • 60p {Number(link.opens_last_60m || 0)} luot</small>
               </div>
               <button
                 type="button"
-                className="mini-action"
+                className="mmo-btn mmo-btn-small"
                 disabled={loading || claimingId === link.id}
                 onClick={() => claimLink(link.id)}
               >
                 {claimingId === link.id ? 'Dang lay...' : 'Lay link'}
               </button>
-            </div>
+            </article>
           ))}
         </div>
-      </article>
+      </section>
     </section>
   );
 }
-
-
